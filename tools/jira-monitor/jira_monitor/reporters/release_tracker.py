@@ -1,13 +1,12 @@
 """
 Workstream 2 — Release Candidate Tracker
 
-For each configured project (MOBILE, ISD):
+For each configured project:
   - Fetches Jira versions (releases)
   - Filters to unreleased or recently released (last 30 days)
-  - Produces a per-platform build status table
+  - Produces a per-project build status table
   - Surfaces issues still open against each release
 
-Replaces: AUTO-88–94 manual candidate build notification tasks.
 Publishes to: jira_monitor.confluence.release_tracker_page_id (global config)
 """
 
@@ -22,8 +21,7 @@ LOOKBACK_DAYS = 30
 def run(client: AtlassianClient, config: dict) -> str:
     """Return a Markdown report string."""
     projects = config.get("jira", {}).get("projects", {})
-    target_keys = [projects.get("mobile"), projects.get("isd")]
-    target_keys = [k for k in target_keys if k]
+    target_keys = [k for k in projects.values() if k]
 
     sections = []
     for project_key in target_keys:

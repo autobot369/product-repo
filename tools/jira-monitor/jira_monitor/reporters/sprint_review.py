@@ -7,7 +7,6 @@ For each configured project:
   - Flags sprint goal risk (>30% not started with <3 days remaining)
   - Generates a demo agenda (Done items, grouped by epic)
 
-Replaces: AUTO-97/98/99/100 manual Sprint Review coordination tasks.
 Publishes to: confluence.pages.sprint_reviews_parent (global config)
 """
 
@@ -27,8 +26,7 @@ STATUS_BUCKETS = {
 def run(client: AtlassianClient, config: dict) -> str:
     """Return a Markdown report string."""
     projects = config.get("jira", {}).get("projects", {})
-    target_keys = [projects.get("isd"), projects.get("auto"), projects.get("oip")]
-    target_keys = [k for k in target_keys if k]
+    target_keys = [k for k in projects.values() if k]
 
     sections = []
     risk_threshold = config.get("sprint_review", {}).get("risk_threshold", 0.30)

@@ -37,7 +37,7 @@ WORKSTREAMS = {
 }
 
 CONFLUENCE_PAGE_KEYS = {
-    "sprint":   ("confluence", "pages", "sprint_reviews_parent"),
+    "sprint":   ("confluence", "sprint_reviews_parent"),
     "release":  ("confluence", "release_tracker_page_id"),
     "demand":   ("confluence", "demand_review_page_id"),
     "pipeline": ("confluence", "pipeline_page_id"),

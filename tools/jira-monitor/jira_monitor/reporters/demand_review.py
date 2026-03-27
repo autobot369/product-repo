@@ -7,7 +7,6 @@ For each configured project:
   - Ranks agenda: unblocked new → stale → recently updated
   - Surfaces unassigned epics needing an owner
 
-Replaces: AUTO-130 manual Demand Review epic and its child tasks.
 Publishes to: jira_monitor.confluence.demand_review_page_id (global config)
 """
 
@@ -25,8 +24,7 @@ DEMAND_STATUSES = {
 def run(client: AtlassianClient, config: dict) -> str:
     """Return a Markdown report string."""
     projects = config.get("jira", {}).get("projects", {})
-    target_keys = [projects.get("isd"), projects.get("auto"), projects.get("oip")]
-    target_keys = [k for k in target_keys if k]
+    target_keys = [k for k in projects.values() if k]
 
     stale_days = config.get("stale_epic_days", 60)
     all_epics  = []

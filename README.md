@@ -52,21 +52,40 @@ cp .env.example .env
 
 ### 2. Configuration
 
-Edit `tools/config.yml` — single source of truth for all non-secret settings:
+Edit `tools/config.yml` — single source of truth for all non-secret settings. Required fields to update:
 
 ```yaml
 atlassian:
-  base_url: https://your-org.atlassian.net
+  base_url: https://your-org.atlassian.net   # your Atlassian Cloud URL
 
 jira:
   projects:
-    squad1: MYTEAM
+    squad1: MYPROJECT    # add one entry per Jira project (used by jira-monitor and pm-workers)
 
 confluence:
   spaces:
-    - key: PROD
+    - key: TEAM          # Confluence space key agents read from and publish to
       label: "Product Team"
+
+jira_monitor:
+  confluence:
+    sprint_reviews_parent:   ""   # Confluence page ID for sprint review reports
+    demand_review_page_id:   ""   # Confluence page ID for demand review digests
+    release_tracker_page_id: ""   # Confluence page ID for release tracker reports
+    pipeline_page_id:        ""   # Confluence page ID for feature pipeline reports
+
+pm_workers:
+  read_space:    TEAM    # space agents search for context
+  publish_space: TEAM    # space agents publish PRDs and research to
+  prd_parent_page_id:             ""   # parent page for new PRDs
+  market_research_parent_page_id: ""   # parent page for monthly research reports
+  default_jira_project: MYPROJECT
+  scheduler:
+    timezone: UTC        # pytz timezone string, e.g. "America/New_York"
+    topic:    "Tier 1 competitor and innovation trends monthly scan"
 ```
+
+See each tool's README for the full config reference: [pm-workers](tools/pm-workers/README.md) · [jira-monitor](tools/jira-monitor/README.md) · [confluence-migration](tools/confluence-migration/README.md)
 
 ### 3. Documentation site
 
@@ -90,7 +109,7 @@ Agent personas live in `.claude/agents/` and slash-command skills in `.claude/sk
 |------|-------------|---------|
 | **BMM** | AI-assisted PM workflows: brief → PRD → epics → stories | [tools/bmm/README.md](tools/bmm/README.md) |
 | **Confluence Migration** | Converts Confluence spaces into versioned Markdown in `docs/` | [tools/confluence-migration/](tools/confluence-migration/) |
-| **Jira Monitor** | Sprint, release, and demand reporting published to Confluence | [tools/jira-monitor/](tools/jira-monitor/) |
+| **Jira Monitor** | Sprint, release, and demand reporting published to Confluence | [tools/jira-monitor/README.md](tools/jira-monitor/README.md) |
 | **PM Workers** | Claude-powered slash commands for PRD creation, research, and story generation | [tools/pm-workers/](tools/pm-workers/) |
 
 ---

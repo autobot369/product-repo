@@ -1,14 +1,12 @@
 """
 Workstream 4 — Feature Pipeline Monitor
 
-For each active epic in ISD / AUTO:
+For each active epic across configured projects:
   - Calculates story completion % (Done / Total)
   - Surfaces blocked or unassigned stories
-  - Cross-references docs/research/ISD/ for competitive signals that map
+  - Cross-references docs/research/ for competitive signals that map
     to in-flight features — closing the omni-monitor → roadmap → sprint loop
 
-Replaces: AUTO-125 (Early Access MVP) and AUTO-145 (Personalization MVP)
-          manual feature tracking stories.
 Publishes to: jira_monitor.confluence.pipeline_page_id (global config)
 """
 
@@ -28,10 +26,9 @@ IN_PROGRESS      = {"in progress", "develop", "ready for testing", "in review"}
 def run(client: AtlassianClient, config: dict) -> str:
     """Return a Markdown report string."""
     projects = config.get("jira", {}).get("projects", {})
-    target_keys = [projects.get("isd"), projects.get("auto")]
-    target_keys = [k for k in target_keys if k]
+    target_keys = [k for k in projects.values() if k]
 
-    research_dir = Path(config.get("output", {}).get("research", "docs/research")) / "ISD"
+    research_dir = Path(config.get("output", {}).get("research", "docs/research"))
     signals      = _load_research_signals(research_dir)
 
     sections = []

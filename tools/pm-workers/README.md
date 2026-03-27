@@ -6,13 +6,67 @@ All agents connect to Confluence and Jira via the Atlassian MCP server. Configur
 
 ---
 
+## Setup
+
+### 1. Install dependencies
+
+```bash
+cd tools/pm-workers
+pip install -r requirements.txt
+```
+
+### 2. Credentials
+
+Set in `.env` at repo root (copied from `.env.example`):
+
+```
+ANTHROPIC_API_KEY=your-anthropic-key
+ATLASSIAN_EMAIL=you@yourorg.com
+ATLASSIAN_API_TOKEN=your-api-token
+```
+
+### 3. Configure `tools/config.yml`
+
+All settings live in the global `tools/config.yml`. Update the following before running:
+
+```yaml
+atlassian:
+  base_url: https://your-org.atlassian.net   # your Atlassian Cloud URL
+
+jira:
+  projects:
+    squad1: MYPROJECT    # default Jira project for story creation
+
+pm_workers:
+  read_space:    TEAM    # Confluence space key agents search for context
+  publish_space: TEAM    # Confluence space key agents publish PRDs and research to
+
+  prd_parent_page_id:             "123456"   # parent page for new PRDs
+  market_research_parent_page_id: "123457"   # parent page for monthly market-research reports
+
+  default_jira_project: MYPROJECT  # Jira project key used when none is specified
+  story_label: pm-agent-generated  # label applied to all agent-created Jira issues
+
+  scheduler:
+    fire_day:  4          # day of month to run monthly market-research (1–28)
+    fire_hour: 9          # hour in 24h format
+    fire_min:  0
+    timezone:  UTC        # pytz timezone string, e.g. "America/New_York", "Europe/London"
+    topic:     "Tier 1 competitor and innovation trends monthly scan"
+```
+
+> Page IDs are found in the URL of any Confluence page: `.../pages/PAGE_ID/...`
+
+Leave a page ID as `""` to skip that publish target — the agent will still run and output locally.
+
+---
+
 ## Agents
 
 | Agent | Skill | Reads | Writes |
 |-------|-------|-------|--------|
 | PRD Creator | `/create-prd` | Confluence (context search) | Confluence (new/updated PRD page) |
 | User Story Generator | `/user-stories` | Confluence PRD or space search, Jira sprints | Jira (new Story issues, optional sprint assignment) |
-| Omni-Channel Monitor | `/omni-monitor` | Web (competitors, news, LinkedIn) | Confluence (log or monthly report page) |
 | Market Research | `/market-research` | Web + Confluence | Confluence (new research report page) |
 | Confluence User Stories | `/confluence-user-stories` | Confluence (full space scan), Jira | Jira (bulk Story issues) |
 
@@ -22,11 +76,11 @@ All agents connect to Confluence and Jira via the Atlassian MCP server. Configur
 
 ```
 /create-prd
-Initiative: Loyalty Scan & Earn
-Business Problem: Low in-store scan adoption (current: 18%, target: 35%)
-User Problem: Associates don't prompt members to scan at POS
-Ideal Solution: In-app prompt with scan confirmation flow
-Metrics: Scan rate, loyalty attach rate
+Initiative: Mobile Checkout Redesign
+Business Problem: High cart abandonment at payment step (current: 42%, target: 25%)
+User Problem: Users drop off when asked to re-enter payment details
+Ideal Solution: One-tap checkout with saved payment methods
+Metrics: Cart abandonment rate, checkout conversion rate
 ```
 
 ```
@@ -35,11 +89,6 @@ PRD: https://your-org.atlassian.net/wiki/spaces/TEAM/pages/12345
 Jira project: SQUAD1
 Epic: SQUAD1-42
 Board ID: 7
-```
-
-```
-/omni-monitor
-run a parallel scan of Tier 1 competitors and summarise hiring spikes in AI over the last 30 days
 ```
 
 ```
@@ -54,7 +103,7 @@ Depth: full
 Space: TEAM
 Jira project: SQUAD1
 Epic: SQUAD1-100
-Filter: loyalty
+Filter: checkout
 ```
 
 ---
@@ -66,11 +115,11 @@ cd tools/pm-workers
 
 # PRD Creator
 python run.py create-prd \
-    --arg "Initiative=Loyalty Scan & Earn" \
-    --arg "Business Problem=Low in-store scan adoption" \
-    --arg "User Problem=Associates don't prompt members to scan" \
-    --arg "Ideal Solution=In-app prompt at POS" \
-    --arg "Metrics=Scan rate, loyalty attach rate"
+    --arg "Initiative=Mobile Checkout Redesign" \
+    --arg "Business Problem=High cart abandonment at payment step" \
+    --arg "User Problem=Users drop off when asked to re-enter payment details" \
+    --arg "Ideal Solution=One-tap checkout with saved payment methods" \
+    --arg "Metrics=Cart abandonment rate, checkout conversion rate"
 
 # User Story Generator
 python run.py user-stories \
@@ -78,10 +127,6 @@ python run.py user-stories \
     --arg "Jira project=SQUAD1" \
     --arg "Epic=SQUAD1-42" \
     --arg "Board ID=7"
-
-# Omni-Monitor
-python run.py omni-monitor \
-    --arg "Request=run a full parallel scan of Tier 1 competitors"
 
 # Market Research
 python run.py market-research \
@@ -98,9 +143,9 @@ python run.py confluence-user-stories \
 
 ---
 
-## Monthly scheduler (omni-monitor)
+## Monthly scheduler (market-research)
 
-Fires the omni-monitor automatically on the **4th of every month at 09:00**:
+Fires `/market-research` automatically on the configured schedule (default: 4th of each month at 09:00 UTC). Schedule, timezone, and research topic are all set in `tools/config.yml` under `pm_workers.scheduler`. Reports are published to Confluence under `pm_workers.market_research_parent_page_id`.
 
 ```bash
 # Start in background (survives terminal close)
@@ -118,7 +163,7 @@ kill $(cat scheduler.pid)
 ## End-to-end workflow
 
 ```
-1. /omni-monitor or /market-research
+1. /market-research
    → competitive landscape or research report in Confluence
    ↓
 2. Identify a gap or opportunity
@@ -147,11 +192,10 @@ For a legacy space with undocumented features, run `/confluence-user-stories` al
 | Confluence space to read context from | `tools/config.yml` | `pm_workers.read_space` |
 | Confluence space to publish PRDs/research to | `tools/config.yml` | `pm_workers.publish_space` |
 | Parent page for new PRDs | `tools/config.yml` | `pm_workers.prd_parent_page_id` |
-| Omni-monitor log page | `tools/config.yml` | `pm_workers.omni_log_page_id` |
-| Omni-monitor monthly report page | `tools/config.yml` | `pm_workers.omni_monthly_page_id` |
+| Monthly market-research parent page | `tools/config.yml` | `pm_workers.market_research_parent_page_id` |
 | Default Jira project for story creation | `tools/config.yml` | `pm_workers.default_jira_project` |
 | Story label for generated tickets | `tools/config.yml` | `pm_workers.story_label` |
-| Monthly scheduler day/time | `tools/config.yml` | `pm_workers.scheduler.*` |
+| Monthly market-research scheduler day/time | `tools/config.yml` | `pm_workers.scheduler.*` |
 | Atlassian base URL, project keys | `tools/config.yml` | `atlassian.*`, `jira.projects` |
 | `ANTHROPIC_API_KEY`, `ATLASSIAN_EMAIL`, `ATLASSIAN_API_TOKEN` | `.env` (repo root) | — |
 | Agent skill prompts | `.claude/skills/*.md` | — |

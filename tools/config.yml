@@ -18,15 +18,11 @@ jira:
     squad1: SQUAD1
     squad2: SQUAD2
 
-# Confluence spaces and well-known page IDs
+# Confluence spaces
 confluence:
   spaces:
     - key: TEAM
       label: "Product Team"
-
-  pages:
-    omni_monitor_log:      ""   # competitive research log page ID
-    sprint_reviews_parent: ""   # sprint review pages parent ID
 
 # Tool-specific config sections
 
@@ -44,10 +40,10 @@ jira_monitor:
     pause_before_publish: true
   stale_epic_days: 60
   confluence:
-    sprint_review_page_id:   ""
-    demand_review_page_id:   ""
-    release_tracker_page_id: ""
-    pipeline_page_id:        ""
+    sprint_reviews_parent:   ""   # parent page — each sprint review is created as a child
+    demand_review_page_id:   ""   # page to prepend demand review digests to
+    release_tracker_page_id: ""   # page to prepend release tracker reports to
+    pipeline_page_id:        ""   # page to prepend feature pipeline reports to
 
 pm_workers:
   # Confluence space agents read for context and publish PRDs/research to
@@ -57,18 +53,17 @@ pm_workers:
   # Parent page for new PRDs
   prd_parent_page_id: ""
 
-  # Confluence page for omni-monitor log (ad-hoc runs)
-  omni_log_page_id: ""
-
-  # Confluence page for monthly omni-monitor report
-  omni_monthly_page_id: ""
+  # Confluence parent page for monthly market-research reports
+  market_research_parent_page_id: ""
 
   # Jira defaults for story creation
   default_jira_project: SQUAD1
   story_label: pm-agent-generated
 
-  # Scheduler: day of month and time to fire the monthly omni-monitor
+  # Scheduler: when and what to run for the monthly market-research scan
   scheduler:
-    fire_day:  4
-    fire_hour: 9
+    fire_day:  4           # day of month (1–28)
+    fire_hour: 9           # hour in 24h format
     fire_min:  0
+    timezone:  UTC         # pytz timezone string, e.g. "America/New_York", "Europe/London"
+    topic:     "Tier 1 competitor and innovation trends monthly scan"

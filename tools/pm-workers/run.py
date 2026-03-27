@@ -14,30 +14,30 @@ Agents:
 
 Examples:
   python run.py create-prd \\
-      --arg "Initiative=Beauty Pass Scan & Earn" \\
-      --arg "Business Problem=Low in-store scan adoption (current: 18%, target: 35%)" \\
-      --arg "User Problem=BAs don't prompt members to scan at POS" \\
-      --arg "Ideal Solution=In-app BA prompt with scan confirmation" \\
-      --arg "Metrics=Scan rate, Beauty Pass attach rate"
+      --arg "Initiative=Mobile Checkout Redesign" \\
+      --arg "Business Problem=High cart abandonment at payment step (current: 42%, target: 25%)" \\
+      --arg "User Problem=Users drop off when asked to re-enter payment details" \\
+      --arg "Ideal Solution=One-tap checkout with saved payment methods" \\
+      --arg "Metrics=Cart abandonment rate, checkout conversion rate"
 
   python run.py user-stories \\
-      --arg "PRD=https://sephora-asia.atlassian.net/wiki/spaces/ISD/pages/62737252543" \\
-      --arg "Jira project=ISD" \\
-      --arg "Epic=ISD-42" \\
+      --arg "PRD=https://your-org.atlassian.net/wiki/spaces/TEAM/pages/12345" \\
+      --arg "Jira project=SQUAD1" \\
+      --arg "Epic=SQUAD1-42" \\
       --arg "Board ID=7"
 
   python run.py omni-monitor \\
-      --arg "Request=run a full parallel scan of Tier 1 beauty competitors"
+      --arg "Request=run a full parallel scan of Tier 1 competitors"
 
   python run.py market-research \\
-      --arg "Topic=AI personalisation in beauty retail SEA 2026" \\
-      --arg "Markets=SG,MY,TH" \\
+      --arg "Topic=AI personalisation in retail 2026" \\
+      --arg "Markets=US,UK,AU" \\
       --arg "Depth=full"
 
   python run.py confluence-user-stories \\
-      --arg "Space=ISD" \\
-      --arg "Jira project=ISD" \\
-      --arg "Epic=ISD-100"
+      --arg "Space=TEAM" \\
+      --arg "Jira project=SQUAD1" \\
+      --arg "Epic=SQUAD1-100"
 """
 
 import argparse
