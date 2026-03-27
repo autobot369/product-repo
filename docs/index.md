@@ -4,7 +4,7 @@ Central knowledge base for product and engineering teams.
 
 ---
 
-## Quick Links
+## Knowledge Base
 
 <div class="grid cards" markdown>
 
@@ -40,14 +40,30 @@ Central knowledge base for product and engineering teams.
 
     [:octicons-arrow-right-24: Browse Experiments](experiments/index.md)
 
+-   **User Journeys**
+
+    ---
+
+    UX flows mapped across the customer funnel — front, mid, bottom, and loyalty.
+
+    [:octicons-arrow-right-24: Browse User Journeys](user-journeys/index.md)
+
+-   **Product Log**
+
+    ---
+
+    Historical record of product decisions, shipped features, and initiative outcomes.
+
+    [:octicons-arrow-right-24: Browse Product Log](product-log/index.md)
+
 </div>
 
 ---
 
 ## How to Navigate
 
-- Use the **tabs at the top** to switch between PRDs, Specs, Research, and Experiments
-- Use the **left sidebar** to browse by squad within each section
+- Use the **tabs at the top** to switch between sections
+- Use the **left sidebar** to browse within each section
 - Use the **search bar** (top right) to find any page — full-text across all documents
 - Use **tags** on any page to see related content across sections
 
