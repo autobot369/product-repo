@@ -1,0 +1,62 @@
+# BMM Module Configuration
+# Adapted from BMAD Method v6.0.4
+
+project_name: product-repo
+user_skill_level: intermediate
+
+# Default reference: all agents read from docs/ as their knowledge base
+project_knowledge: "{project-root}/docs"
+
+# All produced outputs go here; commit selectively to docs/ once reviewed
+output_folder: "{project-root}/tools/bmm/output"
+
+# Workflow engine location (relative to project root)
+workflow_engine: "{project-root}/tools/bmm/core/workflow.xml"
+
+# Workflow root (used by agents to resolve workflow paths)
+workflows_root: "{project-root}/tools/bmm/workflows"
+
+# Core Configuration
+user_name: PM
+communication_language: English
+document_output_language: English
+primary_model: claude-sonnet-4-6
+
+# Docs folders — agents read from these paths for context
+docs_prds: "{project-root}/docs/PRDs"
+docs_research: "{project-root}/docs/research"
+docs_user_journeys: "{project-root}/docs/user-journeys"
+docs_specs: "{project-root}/docs/specs"
+docs_product_log: "{project-root}/docs/product-log"
+
+# PRD intake mode
+# strategic-core: replaces steps 02+02b+02c+03 with a single dense structured prompt
+# step-by-step: original multi-turn facilitation (default BMAD behaviour)
+prd_intake_mode: strategic-core
+
+# Strategic Core intake template
+# Pre-filled by John (PM) in one pass. All three sections map directly to PRD sections:
+#   problem_statement  → Executive Summary / Problem framing
+#   target_user        → Executive Summary / Target users + User journeys
+#   success_metrics    → Success Criteria section
+#
+# Leave a field blank to trigger a focused follow-up question for that field only.
+strategic_core_template:
+  problem_statement:
+    what: ""          # One sentence: the specific friction or gap
+    who: ""           # User segment experiencing it
+    why_now: ""       # Market timing or urgency signal
+    current_workaround: ""  # What users do today instead
+
+  target_user:
+    segment: ""       # e.g. loyalty member, new shopper, in-store associate
+    context: ""       # Where/when they encounter the problem
+    job_to_be_done: "" # Underlying goal — not the feature request
+    pain_intensity: "" # low | medium | high | critical
+
+  success_metrics:
+    primary_kpi: ""   # Single north-star metric with baseline → target
+    secondary_kpis: [] # 2–3 supporting metrics
+    cr_impact: ""     # Directional CR hypothesis, e.g. "+2–4% checkout CR"
+    aov_impact: ""    # Directional AOV hypothesis
+    time_to_validate: "" # e.g. "6 weeks post-launch"

@@ -1,0 +1,74 @@
+# Global Tools Config — shared by all tools in tools/
+# Credentials are NEVER stored here — use .env at repo root.
+# ATLASSIAN_EMAIL and ATLASSIAN_API_TOKEN are loaded from .env automatically.
+
+atlassian:
+  base_url: https://your-org.atlassian.net
+
+# Canonical output directories (relative to repo root)
+output:
+  prds:     docs/PRDs/
+  abtests:  docs/experiments/
+  specs:    docs/specs/
+  research: docs/research/
+
+# Jira project keys used across tools
+jira:
+  projects:
+    squad1: SQUAD1
+    squad2: SQUAD2
+
+# Confluence spaces and well-known page IDs
+confluence:
+  spaces:
+    - key: TEAM
+      label: "Product Team"
+
+  pages:
+    omni_monitor_log:      ""   # competitive research log page ID
+    sprint_reviews_parent: ""   # sprint review pages parent ID
+
+# Tool-specific config sections
+
+confluence_migration:
+  cache:
+    dir:     tools/confluence-migration/cache/
+    enabled: true
+  gates:
+    pause_after_fetch:    true
+    pause_after_classify: true
+    pause_after_convert:  false
+
+jira_monitor:
+  gates:
+    pause_before_publish: true
+  stale_epic_days: 60
+  confluence:
+    sprint_review_page_id:   ""
+    demand_review_page_id:   ""
+    release_tracker_page_id: ""
+    pipeline_page_id:        ""
+
+pm_workers:
+  # Confluence space agents read for context and publish PRDs/research to
+  read_space:    TEAM
+  publish_space: TEAM
+
+  # Parent page for new PRDs
+  prd_parent_page_id: ""
+
+  # Confluence page for omni-monitor log (ad-hoc runs)
+  omni_log_page_id: ""
+
+  # Confluence page for monthly omni-monitor report
+  omni_monthly_page_id: ""
+
+  # Jira defaults for story creation
+  default_jira_project: SQUAD1
+  story_label: pm-agent-generated
+
+  # Scheduler: day of month and time to fire the monthly omni-monitor
+  scheduler:
+    fire_day:  4
+    fire_hour: 9
+    fire_min:  0

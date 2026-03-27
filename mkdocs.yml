@@ -1,0 +1,81 @@
+site_name: Product Management Repository
+docs_dir: docs
+
+theme:
+  name: material
+
+  palette:
+    # Auto-match OS preference
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: pink
+      accent: pink
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: pink
+      accent: pink
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+
+  features:
+    # Navigation
+    - navigation.tabs           # Top-level sections as horizontal tabs
+    - navigation.tabs.sticky    # Tabs stay visible on scroll
+    - navigation.sections       # Group sidebar items visually
+    - navigation.path           # Breadcrumb trail under the header
+    - navigation.indexes        # Section title is its own clickable page
+    - navigation.top            # Back-to-top button on long pages
+
+    # Table of contents
+    - toc.follow                # TOC highlights current section as you scroll
+
+    # Search
+    - search.suggest            # Autocomplete suggestions
+    - search.highlight          # Highlight matches in page content
+    - search.share              # Shareable search URLs
+
+    # Content
+    - content.code.copy         # Copy button on code blocks
+    - content.tabs.link         # Linked content tabs (stay in sync)
+
+plugins:
+  - search:
+      lang: en
+  - tags
+  - awesome-pages              # Controls section order via .pages files
+  - glightbox:                 # Lightbox for images and Mermaid diagrams
+      touchNavigation: true
+      loop: false
+      effect: zoom
+      width: 100%
+      height: auto
+      zoomable: true
+      draggable: false
+
+extra_javascript:
+  - javascripts/mermaid-lightbox.js
+
+markdown_extensions:
+  - admonition                 # !!! note / warning / tip blocks
+  - pymdownx.details           # Collapsible admonitions
+  - pymdownx.superfences:      # Fenced code blocks with language highlighting + Mermaid diagrams
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.tabbed:
+      alternate_style: true    # Content tabs
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - tables
+  - attr_list                  # Add CSS classes to elements
+  - md_in_html                 # Markdown inside HTML blocks
+  - toc:
+      permalink: true          # Anchor links on every heading
+
+copyright: Product Team

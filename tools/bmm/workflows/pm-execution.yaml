@@ -1,0 +1,192 @@
+name: PM-Focused Concept-to-Story Flow
+version: 1.3.0
+description: >
+  A stripped-back BMAD workflow for PMs focusing on high-fidelity user stories.
+  Runs concept → research → PRD+UX → architecture → stories, with
+  one solutioning sprint gate and one automated Gherkin validation post-process.
+  Phase 01: accelerated context discovery (concurrent Mary + John, single gate).
+  Phases 02+03: Solutioning Sprint — PRD is single source of truth, UX inline, arch sequential.
+  Phase 04: one-shot backlog — John + Bob resolve Jira space and generate all stories in one block.
+
+# Workflow engine: tools/bmm/core/workflow.xml
+# Knowledge base:  docs/ (set in tools/bmm/config.yaml)
+# Output:          tools/bmm/output/
+#
+# Phase 01 change (v1.1.0):
+#   REMOVED — standalone Brainstorming step (skip if idea is already brief-defined)
+#   ADDED   — concurrent Market Research (Mary) + Product Brief (John)
+#   MERGED  — Feasibility Critique + Market Fit into one "Strategic Alignment" gate
+#
+# Phase 02+03 change (v1.2.0):
+#   REMOVED — Product Brief as a standalone output document (PRD is source of truth)
+#   REMOVED — separate ux-design.md (Sally embeds journeys in PRD functional requirements)
+#   CHANGED — Phase 02: John (PRD) + Sally (UX inline) work concurrently on final-prd.md
+#   CHANGED — Phase 03: Architecture Alignment remains sequential after PRD+UX is locked
+#   MERGED  — "Requirements Gate" + "UX ↔ Arch Check" into one "Technical Readiness Review"
+#
+# Phase 04 change (v1.3.0):
+#   REMOVED — standalone "Create Epics" step (all stories under one resolved epic)
+#   CHANGED — "Generate Stories" + Jira resolution merged into one-shot execution block
+#   REPLACED — manual "Final Gate" party-mode with Automated Gherkin Validator (post-process script)
+
+phases:
+  - phase: 01_Accelerated_Context_Discovery
+    label: "Accelerated Context Discovery"
+    agents: [analyst, pm]           # Mary (analyst) + John (pm) — run concurrently
+    steps:
+      - name: concurrent_context_build
+        label: "Concurrent Context Build"
+        concurrent: true            # Mary and John execute in parallel
+        steps:
+          - name: market_research
+            label: "Market Research — Mary"
+            agent: analyst
+            workflow: "{project-root}/tools/bmm/workflows/1-analysis/research/workflow-market-research.md"
+            params:
+              output: "tools/bmm/output/research-findings.md"
+            description: >
+              Mary runs market sizing, competitor landscape, and customer pain points.
+              Output: tools/bmm/output/research-findings.md
+
+          - name: product_brief
+            label: "Product Brief — John"
+            agent: pm
+            workflow: "{project-root}/tools/bmm/workflows/1-analysis/create-product-brief/workflow.md"
+            params:
+              skip_if_exists: true  # skip if a brief is already defined
+            description: >
+              John drafts the product brief concurrently: vision, target users,
+              success metrics, and scope. Skip if a brief already exists.
+              Output: tools/bmm/output/briefs/product-brief.md
+
+      - name: strategic_alignment_gate
+        label: "Strategic Alignment Gate"
+        exec: "{project-root}/tools/bmm/tasks/remote-context-discovery.md"
+        participants: [analyst, pm, architect]   # Mary, John, Winston
+        duration_target: "10 minutes"
+        description: >
+          Single combined gate replacing separate Feasibility Critique and Market Fit reviews.
+          Mary presents research findings. John presents the product brief.
+          Winston assesses technical feasibility against both.
+          Outcomes: confirmed go/no-go, open risks documented, brief amended if needed.
+          Gate: all three must align before Phase 02.
+
+  - phase: 02_Solutioning_Sprint
+    label: "Solutioning Sprint — PRD with Feature Planning"
+    agents: [pm, ux-designer]       # John (pm) + Sally (ux-designer) — run concurrently
+    steps:
+      - name: prd_with_ux_inline
+        label: "PRD + UX Inline"
+        concurrent: true            # John and Sally work on final-prd.md simultaneously
+        output: "tools/bmm/output/prds/final-prd.md"   # single shared output document
+        steps:
+          - name: prd_authoring
+            label: "PRD Authoring — John"
+            agent: pm
+            workflow: "{project-root}/tools/bmm/workflows/2-plan-workflows/create-prd/workflow-create-prd.md"
+            params:
+              include_nfr: true
+              template: "{project-root}/tools/bmm/workflows/2-plan-workflows/create-prd/templates/prd-template.md"
+            description: >
+              John authors the full PRD: problem statement, success metrics, functional
+              requirements, NFRs, and KPIs. PRD is the single source of truth —
+              no separate product brief document is produced.
+
+          - name: ux_journeys_inline
+            label: "UX Journeys Inline — Sally"
+            agent: ux-designer
+            workflow: "{project-root}/tools/bmm/workflows/2-plan-workflows/create-ux-design/workflow.md"
+            params:
+              output_mode: inline          # embed directly into PRD functional requirements
+              focus: user-journey-mapping
+              target_section: "Functional Requirements"
+            description: >
+              Sally defines user journeys and interaction patterns directly inside
+              the PRD's Functional Requirements section. No separate ux-design.md
+              is produced. References docs/user-journeys/ for existing funnel context.
+
+  - phase: 03_Architecture_and_Readiness
+    label: "Architecture & Technical Readiness"
+    agents: [architect, pm, ux-designer]   # Winston leads; John + Sally available for queries
+    steps:
+      - name: arch_alignment
+        label: "Architecture Alignment"
+        workflow: "{project-root}/tools/bmm/workflows/3-solutioning/create-architecture/workflow.md"
+        params:
+          scope: data-model-and-apis-only
+          input: "tools/bmm/output/prds/final-prd.md"  # reads locked PRD+UX as input
+        description: >
+          Sequential after PRD+UX is locked. Winston defines data model and API
+          contracts only (no infrastructure). Reads final-prd.md as the single input.
+          Output: tools/bmm/output/architecture-decisions.md
+
+      - name: technical_readiness_review
+        label: "Technical Readiness Review"
+        exec: "{project-root}/tools/bmm/tasks/remote-context-discovery.md"
+        participants: [pm, ux-designer, architect]   # John, Sally, Winston
+        description: >
+          Single gate replacing both the Requirements Gate and the UX ↔ Arch Check.
+          Validates: PRD requirements are unambiguous and complete; every journey
+          step in the PRD is supported by the data model; no traceability gaps.
+          Outcomes: go/no-go for Phase 04, open items logged against final-prd.md.
+          Gate: all three must sign off before Backlog Creation begins.
+
+  - phase: 04_One_Shot_Backlog
+    label: "One-Shot Backlog"
+    agents: [pm, sm]               # John (pm) + Bob (sm) — single execution block
+    steps:
+      - name: one_shot_backlog
+        label: "One-Shot Backlog — John + Bob"
+        workflow: "{project-root}/tools/bmm/workflows/4-implementation/create-story/workflow.yaml"
+        params:
+          format: gherkin
+          include_implementation_notes: true
+          single_epic: true         # all stories reside in one epic — no epic decomposition step
+        description: >
+          John and Bob execute in a single block.
+          Step 1 — Jira space resolution: identify the target Jira project key and
+          the single parent epic from config.yaml (jira_project). Cross-check existing
+          stories to avoid duplicates.
+          Step 2 — Story generation: produce all Gherkin stories (Given/When/Then)
+          with implementation notes directly under the resolved epic.
+          No separate epic creation workflow is run.
+          Output: tools/bmm/output/stories/
+
+      - name: gherkin_validator
+        label: "Automated Gherkin Validator"
+        type: post-process          # runs as a script after story generation, not a party-mode session
+        script: "{project-root}/tools/bmm/tasks/remote-context-discovery.md"
+        params:
+          mode: fundamental-analysis
+          checks:
+            - every_story_has_given_when_then
+            - every_story_maps_to_prd_requirement
+            - every_prd_requirement_has_min_one_story
+            - no_duplicate_jira_keys
+          fail_on: any
+          report_output: "tools/bmm/output/gherkin-validation-report.md"
+        description: >
+          Automated post-process replacing the manual Final Gate party-mode session.
+          Runs fundamental analysis checks against all stories in tools/bmm/output/stories/.
+          Fails hard on any violation — blocks publish until all checks pass.
+          Validation report saved to tools/bmm/output/gherkin-validation-report.md.
+
+output:
+  root: "{project-root}/tools/bmm/output"
+  structure:
+    # briefs/ retained for Phase 01 draft context; not a published deliverable
+    briefs: "briefs/"
+    # final-prd.md is the single source of truth — UX journeys embedded inline
+    prds: "prds/final-prd.md"
+    architecture: "architecture-decisions.md"
+    epics: "epics/*.md"
+    stories: "stories/*.md"
+    research: "research-findings.md"
+    validation: "gherkin-validation-report.md"
+    # ux-design.md removed (v1.2.0) — journeys live in PRD functional requirements
+    # epics/ removed (v1.3.0) — all stories reside under a single resolved epic
+
+publish:
+  # Review outputs in tools/bmm/output/, then commit to docs/ manually
+  prds_target: "{project-root}/docs/PRDs"
+  research_target: "{project-root}/docs/research"

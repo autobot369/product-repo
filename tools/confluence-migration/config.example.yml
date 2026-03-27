@@ -1,0 +1,63 @@
+# Confluence Migration — tool-specific config
+# Copy to config.yml and fill in your values.
+# Shared settings (atlassian.base_url, output dirs, spaces, cache, gates)
+# are inherited from tools/config.yml. Only classifier overrides belong here.
+
+classifier:
+  # Exact title overrides — highest priority, checked before labels and heuristics
+  exact_titles:
+    "Homepage": prd
+    "Product Detail Page": prd
+    "Cart Page": prd
+    "Account Page": prd
+
+  label_map:
+    prd:           prd
+    product-req:   prd
+    ab-test:       abtest
+    experiment:    abtest
+    spec:          spec
+    tech-spec:     spec
+    retrospective: skip
+    meeting-notes: skip
+    projectplan:   skip
+
+  # Title/parent keyword heuristics (checked if no matching label)
+  heuristics:
+    research:
+      - "Research"
+      - "Impact Analysis"
+      - "Tech Evaluation"
+      - "Problem Space"
+      - "Discovery"
+      - "Synthesis"
+      - "Prototype Feedback"
+
+    spec:
+      - "API"
+      - "Architecture"
+      - "Integration"
+      - "Schema"
+      - "Flow"
+      - "Contract"
+      - "Webhook"
+
+    abtest:
+      - "A/B Test"
+      - "Experiment"
+      - "Feature Flag"
+      - "Variant"
+
+    prd:
+      - "PRD"
+      - "Product Brief"
+      - "Initiative"
+      - "Feature"
+      - "Epic"
+
+    skip:
+      - "Meeting Notes"
+      - "Retrospective"
+      - "Sprint Review"
+      - "Stand-up"
+      - "Team Charter"

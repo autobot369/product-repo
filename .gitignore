@@ -1,0 +1,24 @@
+# MkDocs generated site
+site/
+
+# Python
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+
+# macOS
+.DS_Store
+**/.DS_Store
+
+# Tool output (review before committing to docs/)
+tools/bmm/output/
+tools/confluence-migration/output/
+tools/confluence-migration/cache/
+
+# Instance-specific config (copy from config.example.yml)
+tools/confluence-migration/config.yml
+
+# Environment
+.env
