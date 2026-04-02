@@ -1,5 +1,7 @@
 ---
-description: Defines the data model and API contracts for a feature based on a locked PRD. Scoped to data-model-and-APIs only — no infrastructure decisions. Run sequentially after the PRD and UX journeys are locked (Phase 03). Feeds the Implementation Readiness gate.
+description: "Defines data model and API contracts for a locked PRD. Scoped to data-model-and-APIs only. Run after Technical Readiness gate (Phase 03)."
+version: "1.1.0"
+last_updated: "2026-04-02"
 bmm_phase: "03_Architecture_and_Readiness"
 bmm_step: "arch_alignment"
 bmm_agent: architect
@@ -30,8 +32,12 @@ handoff_writes:
   - key: architecture_output
     value: "tools/bmm/output/architecture-decisions.md"
 dependencies:
-  - Confluence: read existing specs, API docs, architecture decision records
-  - Jira: read related technical epics (optional)
+  confluence:
+    actions: [search, read]
+    required: false
+  jira:
+    actions: [read_epic]
+    required: false
 ---
 
 # /create-architecture — Architecture Alignment
@@ -211,9 +217,27 @@ stepsCompleted: []
 
 **In orchestrated mode:** Winston runs sequentially after Phase 02 is locked. John and Sally are available for clarification queries but do not re-open the PRD. Output feeds the Implementation Readiness check directly.
 
+## Failure Modes
+
+| Condition | Behaviour |
+|---|---|
+| `final-prd.md` not found | Stop — do not proceed. Ask user to complete `/create-prd` and confirm the PRD is locked before running this skill |
+| UX journeys section missing from PRD | Flag as a gap — note which journey steps are assumed absent. Do not block, but add a risk entry noting reduced API coverage confidence |
+| Functional requirement is ambiguous | Escalate to John — do not interpret silently. Note the ambiguity in Open Technical Risks with owner: John |
+| Journey step implies interaction not in PRD | Escalate to Sally — flag it in Open Technical Risks with owner: Sally. Do not design the journey unilaterally |
+| `min_decisions: 3` cannot be reached | Trivial decisions do not count — identify real trade-offs or escalate to John that the PRD may need more NFR clarity |
+| Conflicting data model found in `docs/specs/` | Surface the conflict as a Risk (severity: high) — do not silently override existing specs |
+
 ## Scope rules (strictly enforced)
 
 - **In scope:** data entities, relationships, API endpoints, auth patterns, indexing strategy, integration contracts
 - **Out of scope:** infrastructure (hosting, CI/CD, containers), frontend implementation, test strategy, observability setup
 - **Escalate to John** if a functional requirement is ambiguous enough to affect the data model
 - **Escalate to Sally** if a journey step implies a data interaction that isn't documented in the PRD
+
+## Guidelines
+
+- Calibrate explanation depth to `{user_skill_level}` from config:
+  - `beginner` — explain each architectural concept before applying it; offer to walk through the data model interactively
+  - `intermediate` — standard execution; surface trade-offs in decisions and ask for confirmation on key choices
+  - `expert` — produce the full document in one pass, flag risks, ask for a single review pass before marking complete

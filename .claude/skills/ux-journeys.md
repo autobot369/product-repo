@@ -1,5 +1,7 @@
 ---
-description: Maps user journeys and interaction patterns for a feature and embeds them directly into the PRD's Functional Requirements section. Does not produce a separate UX doc — output lives inside final-prd.md. Run concurrently with /create-prd during Phase 02.
+description: "Maps user journeys and embeds them inline into the PRD's Functional Requirements. No separate UX doc. Run during Phase 02 alongside /create-prd."
+version: "1.1.0"
+last_updated: "2026-04-02"
 bmm_phase: "02_Solutioning_Sprint"
 bmm_step: "ux_journeys_inline"
 bmm_agent: ux-designer
@@ -24,7 +26,9 @@ handoff_writes:
   - key: ux_journeys_complete
     value: true
 dependencies:
-  - Confluence: read existing user journey pages, design system docs
+  confluence:
+    actions: [search, read]
+    required: false
 ---
 
 # /ux-journeys — UX Journey Mapping (Inline)
@@ -39,6 +43,19 @@ Personas: [optional — comma-separated persona names to focus on]
 ```
 
 Or in orchestrated mode — John passes context directly, no manual invocation needed.
+
+## Standalone mode — no PRD exists yet
+
+If `final-prd.md` does not exist at the specified path, Sally writes a standalone journey document:
+
+```
+tools/bmm/output/prds/ux-journeys-draft.md
+```
+
+At completion, Sally prompts:
+> "Journeys saved to `ux-journeys-draft.md`. Run `/create-prd` next — John can incorporate these directly into the PRD's Functional Requirements section."
+
+This draft is not counted as the `ux_journeys_complete` handoff signal — only inline PRD embedding sets that flag.
 
 ## 1 — Load context
 
@@ -132,9 +149,23 @@ User journeys embedded directly into `tools/bmm/output/prds/final-prd.md` under 
 
 **In orchestrated mode:** Sally works interleaved with John — John authors requirements top-down, Sally appends journeys bottom-up into the same section. Both signal complete before the Technical Readiness gate runs.
 
+## Failure Modes
+
+| Condition | Behaviour |
+|---|---|
+| `final-prd.md` does not exist | Write standalone `ux-journeys-draft.md` (see Standalone mode section above) — do not fail silently |
+| Brief not found | Ask user for key context — persona name, JTBD, and pain intensity — before mapping journeys |
+| Journey maps `min_journeys: 2` cannot be met from inputs | Ask for a second persona or feature area to map before completing |
+| PRD already has a populated User Journeys section | Review existing journeys first — extend rather than replace; confirm with user before overwriting any content |
+| Confluence unavailable | Proceed without design system context — note "No Confluence design system context loaded" in design notes |
+
 ## Guidelines
 
 - Never produce a standalone UX design document — inline-only in orchestrated mode.
 - Reference `docs/user-journeys/` as the canonical pattern library — don't invent patterns that conflict with existing funnel flows.
 - "Mobile-first" means designed for mobile, gracefully enhanced for desktop — not "desktop with a responsive breakpoint."
 - Failure states are not optional — every happy path must have at least one documented failure state.
+- Calibrate explanation depth to `{user_skill_level}` from config:
+  - `beginner` — explain the journey mapping format with an example before starting; confirm persona choices interactively
+  - `intermediate` — map all journeys, present for review
+  - `expert` — produce all journeys in one pass, flag principle violations, ask for a single confirmation

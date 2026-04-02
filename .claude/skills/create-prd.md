@@ -1,5 +1,7 @@
 ---
-description: Creates a fully structured PRD in Confluence from a minimal brief. Searches your Confluence space for related docs, avoids duplicates, and publishes under the configured parent page. Invoke with initiative name, business problem, user problem, ideal solution, and metrics.
+description: "Creates a fully structured PRD from a brief. Reads Confluence for context, avoids duplicates, and publishes under the configured parent page."
+version: "1.1.0"
+last_updated: "2026-04-02"
 bmm_phase: "02_Solutioning_Sprint"
 bmm_step: "prd_authoring"
 bmm_agent: pm
@@ -24,8 +26,12 @@ handoff_writes:
   - key: prd_output
     value: "tools/bmm/output/prds/final-prd.md"
 dependencies:
-  - Confluence: search space, read pages, create/update child page, add labels
-  - Jira: read epic reference (optional)
+  confluence:
+    actions: [search, read, create, update]
+    required: true
+  jira:
+    actions: [read_epic]
+    required: false
 ---
 
 # /create-prd — PRD Creator
@@ -72,6 +78,8 @@ Build the full PRD using this structure:
 | Matching page already exists | Update it rather than creating a duplicate |
 | Metric or claim can't be sourced from context | Mark as placeholder — never invent data |
 
+Leave a `<!-- Sally: embed journeys here -->` placeholder in the Functional Requirements section — do not author UX journeys yourself.
+
 ## 3 — Create or update Confluence page
 
 Check for an existing page under the configured PRD parent (`tools/config.yml` → `pm_workers.prd_parent_page_id`):
@@ -89,6 +97,7 @@ Output the Confluence page URL followed by a next-steps checklist:
 - [ ] Add Figma link once UX kickoff is complete
 - [ ] Fill in target release and team assignments
 - [ ] Answer Open Questions before grooming session
+- [ ] Run `/ux-journeys` to embed user journeys into Functional Requirements
 - [ ] Run `/user-stories` with the PRD URL to generate Jira stories
 
 ## Output
@@ -97,9 +106,25 @@ Confluence page containing the fully structured PRD, published under the configu
 
 **Side effects:** Creates or updates a Confluence child page with labels `prd`, `draft`.
 
+## Failure Modes
+
+| Condition | Behaviour |
+|---|---|
+| `product-brief.md` not found | Ask user to run `/create-product-brief` first — proceeding without a brief produces a lower-quality PRD; confirm intent before continuing |
+| `research-findings.md` not found | Proceed without research context — note "No prior research loaded" in Open Questions |
+| All required inputs missing (no Initiative, no Business Problem) | Ask for Initiative name and Business Problem before generating — minimum viable inputs |
+| Existing PRD page found in Confluence | Update it rather than creating a duplicate — confirm with user if substantial changes are implied |
+| `min_success_metrics` cannot be met from inputs | Ask for missing metrics explicitly — do not invent them or use vague placeholders |
+| Confluence unavailable | Write PRD to `output_file` only — note that Confluence publish failed in the report |
+
 ## Guidelines
 
 - Never hallucinate product data — if a metric can't be sourced from Confluence context, mark it as a placeholder.
 - Do not generate stories in this skill — that is the job of `/user-stories`.
+- Do not author UX journeys — leave the placeholder for Sally's `/ux-journeys` run.
 - If the initiative already has an active Jira epic, note it in the header table.
 - Keep requirement statements in user story format: *As a [persona], I want [action], so that [benefit].*
+- Calibrate explanation depth to `{user_skill_level}` from config:
+  - `beginner` — explain each PRD section before writing it; offer to walk through inputs interactively
+  - `intermediate` — standard execution; confirm ambiguous inputs before proceeding
+  - `expert` — generate the full draft, flag assumptions, ask for a single pass review
