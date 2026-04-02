@@ -48,6 +48,7 @@ CLAUDE_MODELS = [
 SKILL_LEVELS = ["beginner", "intermediate", "expert"]
 
 AGENT_FILES = sorted((REPO_ROOT / ".claude" / "agents").glob("*.md"))
+SKILL_FILES = sorted((REPO_ROOT / ".claude" / "skills").glob("*.md"))
 
 
 # ── helpers ─────────────────────────────────────────────────────────────────────
@@ -296,46 +297,73 @@ def step_bmm() -> dict[str, str]:
 # ── Step 6: Template verification ───────────────────────────────────────────────
 
 def step_templates() -> None:
-    _section("Step 6 — Agent Persona Templates")
+    _section("Step 6 — Agent Personas & Skills")
     console.print(
         "  Want to review the blueprints?\n"
-        "  Inspecting the agent personas now prevents a total system collapse during the sprint.\n"
-        "  Each file in [bold].claude/agents/[/bold] ships with placeholder names — make them yours.\n"
+        "  Inspecting the agent personas and skills now prevents a total system collapse during the sprint.\n"
+        "  Each agent file ships with placeholder names — make them yours.\n"
+        "  Each skill file declares its BMM phase, output contract, and handoff signals.\n"
     )
 
-    if not AGENT_FILES:
-        _info("No agent files found in .claude/agents/ — skipping.")
+    if not AGENT_FILES and not SKILL_FILES:
+        _info("No agent or skill files found — skipping.")
         return
 
+    reviewable: list[tuple[str, pathlib.Path]] = []
     for path in AGENT_FILES:
-        console.print(f"  [cyan]{path.name}[/cyan]")
+        reviewable.append(("agent", path))
+    for path in SKILL_FILES:
+        reviewable.append(("skill", path))
+
+    if AGENT_FILES:
+        console.print("  [bold]Agent personas[/bold] (.claude/agents/):")
+        for path in AGENT_FILES:
+            console.print(f"    [cyan]{path.name}[/cyan]")
+    if SKILL_FILES:
+        console.print("  [bold]Skill playbooks[/bold] (.claude/skills/):")
+        for path in SKILL_FILES:
+            console.print(f"    [cyan]{path.name}[/cyan]")
 
     console.print()
-    open_now = _prompt(
-        questionary.confirm,
-        message="Open each file now for review?",
-        default=True,
+
+    # Let user choose scope — agents only, skills only, or both
+    scope = _prompt(
+        questionary.select,
+        message="Which files would you like to review?",
+        choices=[
+            "Agent personas only  (names, tone, principles)",
+            "Skill playbooks only  (BMM phase, output contracts)",
+            "Both agents and skills",
+            "Skip — I'll review them later",
+        ],
     )
 
-    if not open_now:
+    if "Skip" in scope:
         console.print()
-        _info("You can review them later at:")
-        for path in AGENT_FILES:
-            _info(f"  {path.relative_to(REPO_ROOT)}")
+        _info("You can review them later:")
+        _info("  .claude/agents/   — agent persona files")
+        _info("  .claude/skills/   — skill playbook files")
         return
+
+    files_to_open: list[pathlib.Path] = []
+    if "Agent" in scope or "Both" in scope:
+        files_to_open.extend(AGENT_FILES)
+    if "Skill" in scope or "Both" in scope:
+        files_to_open.extend(SKILL_FILES)
 
     editor = _resolve_editor()
 
-    for i, path in enumerate(AGENT_FILES, 1):
+    for i, path in enumerate(files_to_open, 1):
+        label = "agent" if path.parent.name == "agents" else "skill"
         console.print()
-        console.print(f"  [{i}/{len(AGENT_FILES)}] Opening [bold]{path.name}[/bold] ...")
+        console.print(f"  [{i}/{len(files_to_open)}] Opening [bold]{path.name}[/bold] [{label}] ...")
         _open_in_editor(editor, path)
         _prompt(
             questionary.press_any_key_to_continue,
             message=f"Press Enter when done with {path.name}",
         )
 
-    _ok("All agent templates reviewed.")
+    _ok("Templates reviewed.")
 
 
 def _resolve_editor() -> str:

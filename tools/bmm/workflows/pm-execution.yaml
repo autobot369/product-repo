@@ -1,161 +1,396 @@
 name: PM-Focused Concept-to-Story Flow
-version: 1.3.0
+version: 2.0.0
 description: >
-  A stripped-back BMAD workflow for PMs focusing on high-fidelity user stories.
-  Runs concept → research → PRD+UX → architecture → stories, with
-  one solutioning sprint gate and one automated Gherkin validation post-process.
-  Phase 01: accelerated context discovery (concurrent Mary + John, single gate).
-  Phases 02+03: Solutioning Sprint — PRD is single source of truth, UX inline, arch sequential.
-  Phase 04: one-shot backlog — John + Bob resolve Jira space and generate all stories in one block.
+  Full PM execution workflow — concept → research → PRD+UX → architecture → stories.
+  Orchestrated by John (pm agent) acting as pipeline owner across all phases.
+  Skills are the canonical execution layer; BMM workflows in tools/bmm/workflows/
+  are reference implementations only — skills take precedence.
 
-# Workflow engine: tools/bmm/core/workflow.xml
-# Knowledge base:  docs/ (set in tools/bmm/config.yaml)
-# Output:          tools/bmm/output/
-#
-# Phase 01 change (v1.1.0):
-#   REMOVED — standalone Brainstorming step (skip if idea is already brief-defined)
-#   ADDED   — concurrent Market Research (Mary) + Product Brief (John)
-#   MERGED  — Feasibility Critique + Market Fit into one "Strategic Alignment" gate
-#
-# Phase 02+03 change (v1.2.0):
-#   REMOVED — Product Brief as a standalone output document (PRD is source of truth)
-#   REMOVED — separate ux-design.md (Sally embeds journeys in PRD functional requirements)
-#   CHANGED — Phase 02: John (PRD) + Sally (UX inline) work concurrently on final-prd.md
-#   CHANGED — Phase 03: Architecture Alignment remains sequential after PRD+UX is locked
-#   MERGED  — "Requirements Gate" + "UX ↔ Arch Check" into one "Technical Readiness Review"
-#
-# Phase 04 change (v1.3.0):
-#   REMOVED — standalone "Create Epics" step (all stories under one resolved epic)
-#   CHANGED — "Generate Stories" + Jira resolution merged into one-shot execution block
-#   REPLACED — manual "Final Gate" party-mode with Automated Gherkin Validator (post-process script)
+  Execution model: interleaved single-session (one Claude Code context).
+  Concurrency: interleaved (John and Mary run in sequence within the same session,
+  presented to the user as concurrent progress).
+  Gates: party-mode sessions — Winston joins as challenger, not as a workflow runner.
+  Handoff: each phase writes tools/bmm/output/handoff-{phase}.md before the gate runs.
+
+# ── Skill registry ──────────────────────────────────────────────────────────────
+# All execution is through skills. Agents load the skill file and follow it exactly.
+# BMM workflow files in tools/bmm/workflows/ are the step-level reference;
+# skills wrap them with output contracts, handoff writes, and gate awareness.
+
+skills:
+  create-product-brief: ".claude/skills/create-product-brief.md"
+  market-research:       ".claude/skills/market-research.md"
+  create-prd:            ".claude/skills/create-prd.md"
+  ux-journeys:           ".claude/skills/ux-journeys.md"
+  create-architecture:   ".claude/skills/create-architecture.md"
+  confluence-user-stories: ".claude/skills/confluence-user-stories.md"
+  user-stories:          ".claude/skills/user-stories.md"
+
+# ── Output contract registry ────────────────────────────────────────────────────
+# Each phase must satisfy its output contract before its gate runs.
+# The orchestrator (John) checks these contracts before invoking party mode.
+
+output_contracts:
+  phase_01:
+    brief:
+      file: "tools/bmm/output/briefs/product-brief.md"
+      required_sections: [Problem Statement, Target User, Success Metrics, Scope, Out of Scope]
+    research:
+      file: "tools/bmm/output/research/research-findings.md"
+      required_sections: [Executive Summary, Competitive Landscape, Market Lens, Opportunity Assessment, Recommendations]
+      min_recommendations: 3
+
+  phase_02:
+    prd:
+      file: "tools/bmm/output/prds/final-prd.md"
+      required_sections: [Problem & Opportunity, Objective, Success Metrics, Functional Requirements, Non-Functional Requirements, User Journeys, Out of Scope]
+      min_success_metrics: 2
+      ux_journeys_embedded: true   # Sally's output must be present before gate
+
+  phase_03:
+    architecture:
+      file: "tools/bmm/output/architecture-decisions.md"
+      required_sections: [Context Summary, Data Model, API Contracts, Key Decisions, Open Technical Risks]
+      min_decisions: 3
+      coverage_checklist_complete: true
+
+  phase_04:
+    story_intent:
+      file: "tools/bmm/output/stories/story-intent.md"
+      required_per_feature: [user_story_statement, acceptance_criteria, prd_section_reference]
+    stories:
+      dir: "tools/bmm/output/stories/"
+      format: gherkin
+      required_per_story: [given_when_then, acceptance_criteria, prd_requirement_reference]
+      validator: gherkin_validator
+
+# ── Phases ──────────────────────────────────────────────────────────────────────
 
 phases:
+
+  # ────────────────────────────────────────────────────────────────────────────
   - phase: 01_Accelerated_Context_Discovery
-    label: "Accelerated Context Discovery"
-    agents: [analyst, pm]           # Mary (analyst) + John (pm) — run concurrently
+    label: "Phase 01 — Accelerated Context Discovery"
+    orchestrator: pm              # John drives sequencing
+    execution_model: interleaved  # Mary then John, presented as concurrent progress
+
     steps:
-      - name: concurrent_context_build
-        label: "Concurrent Context Build"
-        concurrent: true            # Mary and John execute in parallel
-        steps:
-          - name: market_research
-            label: "Market Research — Mary"
-            agent: analyst
-            workflow: "{project-root}/tools/bmm/workflows/1-analysis/research/workflow-market-research.md"
-            params:
-              output: "tools/bmm/output/research-findings.md"
-            description: >
-              Mary runs market sizing, competitor landscape, and customer pain points.
-              Output: tools/bmm/output/research-findings.md
 
-          - name: product_brief
-            label: "Product Brief — John"
-            agent: pm
-            workflow: "{project-root}/tools/bmm/workflows/1-analysis/create-product-brief/workflow.md"
-            params:
-              skip_if_exists: true  # skip if a brief is already defined
-            description: >
-              John drafts the product brief concurrently: vision, target users,
-              success metrics, and scope. Skip if a brief already exists.
-              Output: tools/bmm/output/briefs/product-brief.md
-
-      - name: strategic_alignment_gate
-        label: "Strategic Alignment Gate"
+      - name: remote_context
+        label: "Remote Context Discovery"
+        agent: pm
         exec: "{project-root}/tools/bmm/tasks/remote-context-discovery.md"
-        participants: [analyst, pm, architect]   # Mary, John, Winston
-        duration_target: "10 minutes"
         description: >
-          Single combined gate replacing separate Feasibility Critique and Market Fit reviews.
-          Mary presents research findings. John presents the product brief.
-          Winston assesses technical feasibility against both.
-          Outcomes: confirmed go/no-go, open risks documented, brief amended if needed.
-          Gate: all three must align before Phase 02.
+          John runs remote context discovery first — search Confluence and Jira
+          for related PRDs, research, and prior briefs. Results are shared as
+          context for both the brief and the research steps.
 
+      - name: market_research
+        label: "Market Research — Mary"
+        agent: analyst
+        skill: ".claude/skills/market-research.md"
+        bmm_workflow: "{project-root}/tools/bmm/workflows/1-analysis/research/workflow-market-research.md"
+        output: "tools/bmm/output/research/research-findings.md"
+        description: >
+          John loads Mary's agent file (.claude/agents/analyst.md) and embodies her
+          persona. Runs /market-research skill. Output: research-findings.md.
+          On completion, signals research_complete in handoff file.
+
+      - name: product_brief
+        label: "Product Brief — John"
+        agent: pm
+        skill: ".claude/skills/create-product-brief.md"
+        bmm_workflow: "{project-root}/tools/bmm/workflows/1-analysis/create-product-brief/workflow.md"
+        params:
+          skip_if_exists: true
+        output: "tools/bmm/output/briefs/product-brief.md"
+        description: >
+          John resumes as himself. Runs /create-product-brief skill.
+          Reads research-findings.md if complete — pre-populates opportunity data.
+          On completion, signals brief_complete in handoff file.
+
+      - name: write_phase01_handoff
+        label: "Write Phase 01 Handoff"
+        agent: pm
+        action: write_handoff
+        template: "{project-root}/tools/bmm/data/handoff-template.md"
+        output: "tools/bmm/output/handoff-01.md"
+        description: >
+          John writes the phase handoff doc. Records outputs produced, open questions,
+          and key context for the gate and Phase 02.
+
+    gate:
+      name: strategic_alignment
+      label: "Gate 01 — Strategic Alignment"
+      mechanism: party-mode
+      party_mode_workflow: "{project-root}/tools/bmm/core/workflows/party-mode/workflow.md"
+      participants: [analyst, pm, architect]
+      participant_roles:
+        analyst: "Mary presents research findings and surface-level market risks"
+        pm:      "John presents the product brief — problem, user, metrics, scope"
+        architect: "Winston challenges technical feasibility and surfaces blockers"
+      agenda:
+        - "Mary: 3-minute research summary — top 3 findings that affect the brief"
+        - "John: brief walkthrough — problem, user, metrics, scope"
+        - "Winston: feasibility challenge — what needs investigation before Phase 02?"
+        - "All: agree on outcome"
+      output_contract_check: phase_01   # John checks contracts before launching party mode
+      outcomes:
+        go:
+          description: "All three aligned — proceed to Phase 02"
+          action: proceed_to_phase_02
+          handoff_signal: gate_01_passed
+        amend_brief:
+          description: "Brief needs targeted revision — do not re-run research"
+          action: return_to_step_product_brief
+          amend_scope: brief_only
+          handoff_signal: gate_01_amend
+        no_go:
+          description: "Fundamental problem with viability — workflow terminates"
+          action: terminate
+          requires: decision_log_written
+          handoff_signal: gate_01_no_go
+
+  # ────────────────────────────────────────────────────────────────────────────
   - phase: 02_Solutioning_Sprint
-    label: "Solutioning Sprint — PRD with Feature Planning"
-    agents: [pm, ux-designer]       # John (pm) + Sally (ux-designer) — run concurrently
+    label: "Phase 02 — Solutioning Sprint"
+    orchestrator: pm
+    execution_model: interleaved  # John then Sally, building into the same file
+    prerequisite: gate_01_passed
+
     steps:
-      - name: prd_with_ux_inline
-        label: "PRD + UX Inline"
-        concurrent: true            # John and Sally work on final-prd.md simultaneously
-        output: "tools/bmm/output/prds/final-prd.md"   # single shared output document
-        steps:
-          - name: prd_authoring
-            label: "PRD Authoring — John"
-            agent: pm
-            workflow: "{project-root}/tools/bmm/workflows/2-plan-workflows/create-prd/workflow-create-prd.md"
-            params:
-              include_nfr: true
-              template: "{project-root}/tools/bmm/workflows/2-plan-workflows/create-prd/templates/prd-template.md"
-            description: >
-              John authors the full PRD: problem statement, success metrics, functional
-              requirements, NFRs, and KPIs. PRD is the single source of truth —
-              no separate product brief document is produced.
 
-          - name: ux_journeys_inline
-            label: "UX Journeys Inline — Sally"
-            agent: ux-designer
-            workflow: "{project-root}/tools/bmm/workflows/2-plan-workflows/create-ux-design/workflow.md"
-            params:
-              output_mode: inline          # embed directly into PRD functional requirements
-              focus: user-journey-mapping
-              target_section: "Functional Requirements"
-            description: >
-              Sally defines user journeys and interaction patterns directly inside
-              the PRD's Functional Requirements section. No separate ux-design.md
-              is produced. References docs/user-journeys/ for existing funnel context.
+      - name: load_phase01_handoff
+        label: "Load Phase 01 Handoff"
+        agent: pm
+        action: read_handoff
+        file: "tools/bmm/output/handoff-01.md"
+        description: >
+          John reads handoff-01.md completely before starting. Carries forward all
+          context, open questions, and Winston's feasibility notes into the PRD.
 
+      - name: prd_authoring
+        label: "PRD Authoring — John"
+        agent: pm
+        skill: ".claude/skills/create-prd.md"
+        bmm_workflow: "{project-root}/tools/bmm/workflows/2-plan-workflows/create-prd/workflow-create-prd.md"
+        params:
+          include_nfr: true
+          template: "{project-root}/tools/bmm/workflows/2-plan-workflows/create-prd/templates/prd-template.md"
+          reads:
+            - "tools/bmm/output/briefs/product-brief.md"
+            - "tools/bmm/output/research/research-findings.md"
+        output: "tools/bmm/output/prds/final-prd.md"
+        description: >
+          John authors the full PRD. Reads brief + research as primary inputs.
+          Leaves the User Journeys subsection of Functional Requirements empty —
+          marked with a placeholder: "<!-- Sally: embed journeys here -->".
+          Signals prd_skeleton_complete when structure is written but before Sally's section.
+
+      - name: ux_journeys_inline
+        label: "UX Journeys Inline — Sally"
+        agent: ux-designer
+        skill: ".claude/skills/ux-journeys.md"
+        bmm_workflow: "{project-root}/tools/bmm/workflows/2-plan-workflows/create-ux-design/workflow.md"
+        params:
+          output_mode: inline
+          target_file: "tools/bmm/output/prds/final-prd.md"
+          target_section: "Functional Requirements"
+          reads:
+            - "tools/bmm/output/briefs/product-brief.md"
+            - "tools/bmm/output/research/research-findings.md"
+            - "docs/user-journeys/"
+        description: >
+          John loads Sally's agent file (.claude/agents/ux-designer.md) and embodies her.
+          Runs /ux-journeys skill. Appends journey maps to the PRD's Functional Requirements
+          section. Does not overwrite John's content. Signals ux_journeys_complete on finish.
+
+      - name: prd_validation
+        label: "PRD Validation"
+        agent: pm
+        exec: "{project-root}/tools/bmm/workflows/2-plan-workflows/create-prd/workflow-validate-prd.md"
+        input: "tools/bmm/output/prds/final-prd.md"
+        description: >
+          John re-assumes PM role. Runs the 12-step PRD validator automatically.
+          Any validation failure must be resolved before the gate runs.
+          Validator output is appended as a checklist to the PRD frontmatter.
+
+      - name: write_phase02_handoff
+        label: "Write Phase 02 Handoff"
+        agent: pm
+        action: write_handoff
+        template: "{project-root}/tools/bmm/data/handoff-template.md"
+        output: "tools/bmm/output/handoff-02.md"
+
+    gate:
+      name: technical_readiness
+      label: "Gate 02 — Technical Readiness Review"
+      mechanism: party-mode
+      party_mode_workflow: "{project-root}/tools/bmm/core/workflows/party-mode/workflow.md"
+      participants: [pm, ux-designer, architect]
+      participant_roles:
+        pm:          "John presents the PRD — requirements, metrics, scope"
+        ux-designer: "Sally walks through the embedded user journeys"
+        architect:   "Winston validates that every journey step has a supportable data model"
+      agenda:
+        - "John: PRD walkthrough — requirements and success metrics"
+        - "Sally: journey walkthrough — happy paths, failure states, edge cases"
+        - "Winston: feasibility audit — flag any requirement that needs architectural investigation"
+        - "All: confirm no ambiguities that would block architecture work"
+      output_contract_check: phase_02
+      prerequisite_check:
+        file: "tools/bmm/output/prds/final-prd.md"
+        validator_passed: true    # PRD validation must pass before gate launches
+      outcomes:
+        go:
+          description: "PRD and journeys are complete and unambiguous — Winston can start Phase 03"
+          action: proceed_to_phase_03
+          handoff_signal: gate_02_passed
+        open_items:
+          description: "Specific sections need clarification — targeted fix only"
+          action: return_to_specific_step
+          amend_scope: flagged_sections_only
+          handoff_signal: gate_02_open_items
+        no_go:
+          description: "PRD is not ready for architecture — fundamental gaps exist"
+          action: return_to_phase_02_start
+          handoff_signal: gate_02_no_go
+
+  # ────────────────────────────────────────────────────────────────────────────
   - phase: 03_Architecture_and_Readiness
-    label: "Architecture & Technical Readiness"
-    agents: [architect, pm, ux-designer]   # Winston leads; John + Sally available for queries
+    label: "Phase 03 — Architecture & Technical Readiness"
+    orchestrator: pm
+    execution_model: sequential   # Winston runs alone; John + Sally available for queries
+    prerequisite: gate_02_passed
+
     steps:
+
+      - name: load_phase02_handoff
+        label: "Load Phase 02 Handoff"
+        agent: architect
+        action: read_handoff
+        file: "tools/bmm/output/handoff-02.md"
+        description: >
+          John loads Winston's agent file (.claude/agents/architect.md) and embodies him.
+          Winston reads handoff-02.md completely before touching the PRD.
+
       - name: arch_alignment
-        label: "Architecture Alignment"
-        workflow: "{project-root}/tools/bmm/workflows/3-solutioning/create-architecture/workflow.md"
+        label: "Architecture Alignment — Winston"
+        agent: architect
+        skill: ".claude/skills/create-architecture.md"
+        bmm_workflow: "{project-root}/tools/bmm/workflows/3-solutioning/create-architecture/workflow.md"
         params:
           scope: data-model-and-apis-only
-          input: "tools/bmm/output/prds/final-prd.md"  # reads locked PRD+UX as input
+          input: "tools/bmm/output/prds/final-prd.md"
+        output: "tools/bmm/output/architecture-decisions.md"
         description: >
-          Sequential after PRD+UX is locked. Winston defines data model and API
-          contracts only (no infrastructure). Reads final-prd.md as the single input.
-          Output: tools/bmm/output/architecture-decisions.md
+          Winston runs /create-architecture skill. Reads locked final-prd.md as single input.
+          Produces data model + API contracts + decisions + risks.
+          May query John or Sally inline if a requirement is ambiguous — but does not reopen
+          the PRD without gate approval.
 
-      - name: technical_readiness_review
-        label: "Technical Readiness Review"
-        exec: "{project-root}/tools/bmm/tasks/remote-context-discovery.md"
-        participants: [pm, ux-designer, architect]   # John, Sally, Winston
+      - name: implementation_readiness_check
+        label: "Implementation Readiness Check"
+        agent: architect
+        exec: "{project-root}/tools/bmm/workflows/3-solutioning/check-implementation-readiness/workflow.md"
+        params:
+          prd: "tools/bmm/output/prds/final-prd.md"
+          architecture: "tools/bmm/output/architecture-decisions.md"
+        output: "tools/bmm/output/readiness-report.md"
         description: >
-          Single gate replacing both the Requirements Gate and the UX ↔ Arch Check.
-          Validates: PRD requirements are unambiguous and complete; every journey
-          step in the PRD is supported by the data model; no traceability gaps.
-          Outcomes: go/no-go for Phase 04, open items logged against final-prd.md.
-          Gate: all three must sign off before Backlog Creation begins.
+          Winston runs the readiness check as an automated validator — not a party session.
+          Produces readiness-report.md with pass/fail per requirement.
+          Gaps found here are returned to John for targeted PRD amendment (not full Phase 02 re-run).
 
+      - name: write_phase03_handoff
+        label: "Write Phase 03 Handoff"
+        agent: architect
+        action: write_handoff
+        template: "{project-root}/tools/bmm/data/handoff-template.md"
+        output: "tools/bmm/output/handoff-03.md"
+
+    gate:
+      name: implementation_readiness
+      label: "Gate 03 — Implementation Readiness"
+      mechanism: automated_then_party
+      description: >
+        Primary check is the automated readiness report. Party mode only if gaps are found.
+        If readiness-report.md shows all-pass, gate auto-passes — no party session needed.
+        If gaps exist, party mode with John + Winston to resolve targeted items.
+      auto_pass_condition: "readiness-report.md: all_checks_pass = true"
+      party_mode_workflow: "{project-root}/tools/bmm/core/workflows/party-mode/workflow.md"
+      participants: [pm, architect]
+      output_contract_check: phase_03
+      outcomes:
+        ready:
+          description: "All requirements traceable, architecture complete — proceed to backlog"
+          action: proceed_to_phase_04
+          handoff_signal: gate_03_passed
+        gaps_found:
+          description: "Specific PRD sections need amendment — targeted return to Phase 02"
+          action: return_to_phase_02_targeted
+          amend_scope: flagged_prd_sections_only
+          handoff_signal: gate_03_gaps
+
+  # ────────────────────────────────────────────────────────────────────────────
   - phase: 04_One_Shot_Backlog
-    label: "One-Shot Backlog"
-    agents: [pm, sm]               # John (pm) + Bob (sm) — single execution block
+    label: "Phase 04 — One-Shot Backlog"
+    orchestrator: pm
+    execution_model: interleaved  # John then Bob — handshake protocol
+    prerequisite: gate_03_passed
+
     steps:
-      - name: one_shot_backlog
-        label: "One-Shot Backlog — John + Bob"
-        workflow: "{project-root}/tools/bmm/workflows/4-implementation/create-story/workflow.yaml"
+
+      - name: load_phase03_handoff
+        label: "Load Phase 03 Handoff"
+        agent: pm
+        action: read_handoff
+        file: "tools/bmm/output/handoff-03.md"
+        description: >
+          John resumes as himself. Reads handoff-03.md — carries forward
+          Winston's risk flags and open items into story authoring.
+
+      - name: story_intent
+        label: "Story Intent — John"
+        agent: pm
+        skill: ".claude/skills/confluence-user-stories.md"
+        params:
+          mode: intent_only       # produce story intent + AC — not full Jira push
+          reads:
+            - "tools/bmm/output/prds/final-prd.md"
+            - "tools/bmm/output/architecture-decisions.md"
+        output: "tools/bmm/output/stories/story-intent.md"
+        description: >
+          John runs /confluence-user-stories in intent-only mode.
+          Produces story intent doc: user story statement + acceptance criteria
+          + PRD section reference per requirement. Does not push to Jira yet.
+          Signals story_intent_complete on finish.
+
+      - name: gherkin_stories
+        label: "Gherkin Stories + Jira — Bob"
+        agent: sm
+        skill: ".claude/skills/user-stories.md"
+        bmm_workflow: "{project-root}/tools/bmm/workflows/4-implementation/create-story/workflow.yaml"
         params:
           format: gherkin
           include_implementation_notes: true
-          single_epic: true         # all stories reside in one epic — no epic decomposition step
+          single_epic: true
+          reads:
+            - "tools/bmm/output/stories/story-intent.md"
+            - "tools/bmm/output/prds/final-prd.md"
+        output: "tools/bmm/output/stories/"
         description: >
-          John and Bob execute in a single block.
-          Step 1 — Jira space resolution: identify the target Jira project key and
-          the single parent epic from config.yaml (jira_project). Cross-check existing
-          stories to avoid duplicates.
-          Step 2 — Story generation: produce all Gherkin stories (Given/When/Then)
-          with implementation notes directly under the resolved epic.
-          No separate epic creation workflow is run.
-          Output: tools/bmm/output/stories/
+          John loads Bob's agent file (.claude/agents/sm.md) and embodies him.
+          Bob runs /user-stories skill. Consumes John's story-intent.md —
+          converts each intent into full Gherkin format, resolves Jira epic,
+          checks for duplicates, and pushes stories to Jira.
+          Signals stories_complete on finish.
 
       - name: gherkin_validator
         label: "Automated Gherkin Validator"
-        type: post-process          # runs as a script after story generation, not a party-mode session
-        script: "{project-root}/tools/bmm/tasks/remote-context-discovery.md"
+        agent: sm
+        type: post-process
+        exec: "{project-root}/tools/bmm/tasks/remote-context-discovery.md"
         params:
           mode: fundamental-analysis
           checks:
@@ -166,27 +401,55 @@ phases:
           fail_on: any
           report_output: "tools/bmm/output/gherkin-validation-report.md"
         description: >
-          Automated post-process replacing the manual Final Gate party-mode session.
-          Runs fundamental analysis checks against all stories in tools/bmm/output/stories/.
-          Fails hard on any violation — blocks publish until all checks pass.
-          Validation report saved to tools/bmm/output/gherkin-validation-report.md.
+          Bob runs the Gherkin validator as a post-process.
+          Fails hard on any violation — does not proceed to publish until all pass.
+          On failure: Bob re-runs only the failing stories (not the full phase).
+          Signals gherkin_validator_passed on all-pass.
+
+      - name: publish_approval
+        label: "Publish Approval — John"
+        agent: pm
+        action: approve_publish
+        description: >
+          John resumes and presents the validation report.
+          Asks user to approve publish. On approval: push PRD to Confluence,
+          confirm Jira stories are created, update handoff signals.
+
+    gate:
+      name: backlog_complete
+      label: "Gate 04 — Backlog Complete"
+      mechanism: automated
+      auto_pass_condition: "gherkin-validation-report.md: all_checks_pass = true AND user_approved_publish = true"
+      outcomes:
+        complete:
+          description: "All stories valid, user approved — workflow complete"
+          action: terminate_success
+          handoff_signal: workflow_complete
+        validator_failures:
+          description: "Gherkin validator found issues — Bob re-runs failing stories"
+          action: return_to_step_gherkin_stories
+          amend_scope: failing_stories_only
+
+# ── Output structure ────────────────────────────────────────────────────────────
 
 output:
   root: "{project-root}/tools/bmm/output"
   structure:
-    # briefs/ retained for Phase 01 draft context; not a published deliverable
-    briefs: "briefs/"
-    # final-prd.md is the single source of truth — UX journeys embedded inline
-    prds: "prds/final-prd.md"
+    briefs:       "briefs/product-brief.md"
+    research:     "research/research-findings.md"
+    prds:         "prds/final-prd.md"
     architecture: "architecture-decisions.md"
-    epics: "epics/*.md"
-    stories: "stories/*.md"
-    research: "research-findings.md"
-    validation: "gherkin-validation-report.md"
-    # ux-design.md removed (v1.2.0) — journeys live in PRD functional requirements
-    # epics/ removed (v1.3.0) — all stories reside under a single resolved epic
+    readiness:    "readiness-report.md"
+    stories:      "stories/"
+    validation:   "gherkin-validation-report.md"
+    handoffs:
+      phase_01:   "handoff-01.md"
+      phase_02:   "handoff-02.md"
+      phase_03:   "handoff-03.md"
 
 publish:
-  # Review outputs in tools/bmm/output/, then commit to docs/ manually
-  prds_target: "{project-root}/docs/PRDs"
-  research_target: "{project-root}/docs/research"
+  on_workflow_complete:
+    prds_target:      "{project-root}/docs/PRDs"
+    research_target:  "{project-root}/docs/research"
+    confluence_push:  true    # John pushes PRD to Confluence on publish approval
+    jira_stories:     true    # Bob has already pushed stories during phase 04

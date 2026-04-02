@@ -1,5 +1,25 @@
 ---
 description: Generates well-structured Jira user stories from a PRD URL or Confluence context search. Auto-selects story template (Standard / Technical / Gherkin) per story. Optionally assigns stories to the next upcoming sprint. Invoke with Jira project key; PRD URL and epic key are optional.
+bmm_phase: "04_One_Shot_Backlog"
+bmm_step: "gherkin_stories"
+bmm_agent: sm
+bmm_runs: standalone_or_orchestrated
+bmm_reads:
+  - "tools/bmm/output/prds/final-prd.md"
+  - "tools/bmm/output/stories/story-intent.md"
+output_file: "tools/bmm/output/stories/"
+output_contract:
+  format: gherkin
+  required_per_story:
+    - Given/When/Then blocks
+    - acceptance_criteria
+    - prd_requirement_reference
+  post_process: gherkin_validator
+handoff_writes:
+  - key: stories_complete
+    value: true
+  - key: stories_output
+    value: "tools/bmm/output/stories/"
 dependencies:
   - Confluence: search space, read pages
   - Jira: search existing stories, create issues, get sprints, assign to sprint

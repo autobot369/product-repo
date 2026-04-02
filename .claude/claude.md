@@ -98,52 +98,95 @@ Specialized agent instructions live in `.claude/agents/`. Each file describes co
 
 | Agent | Persona | Best for |
 |---|---|---|
-| `pm.md` | John | PRD creation, requirements, stakeholder alignment |
-| `analyst.md` | Mary | Market research, competitive analysis |
-| `architect.md` | Winston | Tech feasibility, API/data model decisions |
-| `ux-designer.md` | Sally | User journey mapping, interaction design |
-| `sm.md` | Bob | Sprint planning, story prep, retrospectives |
+| `pm.md` | John | PRD creation, requirements, stakeholder alignment. **Pipeline orchestrator** for the full PM execution workflow |
+| `analyst.md` | Mary | Market research, competitive analysis, product briefs |
+| `architect.md` | Winston | Tech feasibility, API/data model decisions, ADRs |
+| `ux-designer.md` | Sally | User journey mapping, interaction design (inline into PRD) |
+| `sm.md` | Bob | Sprint planning, Gherkin story authoring, Jira push |
 | `dev.md` | Amelia | Story-level specs, implementation notes |
 | `qa.md` | Quinn | Test plans, acceptance criteria review |
 
 **Invoke an agent:**
 ```
-Use @.claude/agents/pm.md — create a PRD for [feature]
+Use @.claude/agents/pm.md — run the full PM execution workflow
 Use @.claude/agents/analyst.md — run market research on [topic]
 ```
 
-**Skills** (task playbooks) live in `.claude/skills/` — invoke via `/create-prd`, `/user-stories`, etc.
+## Skills (Unified Execution Layer)
+
+Skills are the canonical execution layer — step-by-step playbooks invoked via `/command`. Every skill declares its BMM phase, agent owner, output contract, and handoff signals.
+
+| Skill | Command | Agent | BMM Phase |
+|---|---|---|---|
+| `create-product-brief.md` | `/create-product-brief` | John (pm) | 01 — Context Discovery |
+| `market-research.md` | `/market-research` | Mary (analyst) | 01 — Context Discovery |
+| `create-prd.md` | `/create-prd` | John (pm) | 02 — Solutioning Sprint |
+| `ux-journeys.md` | `/ux-journeys` | Sally (ux-designer) | 02 — Solutioning Sprint |
+| `create-architecture.md` | `/create-architecture` | Winston (architect) | 03 — Architecture |
+| `confluence-user-stories.md` | `/confluence-user-stories` | John (pm) | 04 — Backlog |
+| `user-stories.md` | `/user-stories` | Bob (sm) | 04 — Backlog |
+
+Skills can be run standalone or as part of the orchestrated pipeline. See `.claude/skills/README.md` for the full capability matrix.
 
 ## BMM Workflow Engine
 
-The `tools/bmm/` directory contains a PM-scoped BMAD Method workflow engine.
+The `tools/bmm/` directory contains a PM-scoped BMAD Method workflow engine (v2.0).
 
 **Config:** `tools/bmm/config.yaml`
 - `project_knowledge`: `docs/` — agents read existing PRDs, research, and user journeys as context
 - `output_folder`: `tools/bmm/output/` — all generated artifacts land here before optional Confluence publish
 
-**Run the full concept-to-story flow:**
+**Run the full concept-to-story pipeline (recommended):**
 ```
 Use @.claude/agents/pm.md
-→ Select: Run PM Execution Workflow
-→ Workflow: tools/bmm/workflows/pm-execution.yaml
+→ Select: [RW] Run PM Execution Workflow
 ```
 
-**Or run individual workflows:**
+John (pm) acts as orchestrator — he embodies each agent in sequence, runs the relevant skill per phase, writes handoff context between phases, and facilitates party-mode gates. No manual agent switching required.
+
+**Or run individual skills:**
 ```
-Use @.claude/agents/pm.md — run create-prd workflow
-Use @.claude/agents/analyst.md — run market research on [topic]
-Use @.claude/agents/sm.md — run sprint planning
+/create-product-brief   Initiative: [name]  Idea: [description]
+/market-research        Topic: [area]
+/create-prd             Initiative: [name]  ...
+/ux-journeys            PRD: tools/bmm/output/prds/final-prd.md
+/create-architecture    PRD: tools/bmm/output/prds/final-prd.md
+/user-stories           PRD: [url]  Jira project: [key]
+```
+
+**Pipeline phases and gates:**
+
+```
+Phase 01 — Context Discovery
+  John (/create-product-brief) + Mary (/market-research)
+  ↓ Gate: Strategic Alignment [party-mode: John + Mary + Winston]
+
+Phase 02 — Solutioning Sprint
+  John (/create-prd) + Sally (/ux-journeys inline)
+  ↓ Gate: Technical Readiness [party-mode: John + Sally + Winston]
+
+Phase 03 — Architecture
+  Winston (/create-architecture) → automated readiness check
+  ↓ Gate: Implementation Readiness [auto-pass or targeted party-mode]
+
+Phase 04 — One-Shot Backlog
+  John (/confluence-user-stories intent) → Bob (/user-stories Gherkin + Jira)
+  ↓ Post-process: Gherkin validator → user approves publish
 ```
 
 **Output structure:**
 ```
 tools/bmm/output/
-├── briefs/        ← product brief (phase 01)
-├── research/      ← market/domain research (phase 01)
-├── prds/          ← final PRD (phase 02)
-├── epics/         ← epic breakdowns (phase 04)
-└── stories/       ← Gherkin user stories (phase 04)
+├── briefs/                    ← product brief (phase 01)
+├── research/                  ← market research findings (phase 01)
+├── prds/final-prd.md          ← PRD + inline UX journeys (phase 02)
+├── architecture-decisions.md  ← data model + API contracts (phase 03)
+├── readiness-report.md        ← implementation readiness check (phase 03)
+├── stories/                   ← Gherkin user stories (phase 04)
+├── gherkin-validation-report.md
+├── handoff-01.md              ← phase boundary context (written by orchestrator)
+├── handoff-02.md
+└── handoff-03.md
 ```
 
 Generated files are gitignored by default — commit them to `docs/PRDs/` manually once reviewed.

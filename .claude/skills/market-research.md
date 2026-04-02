@@ -1,5 +1,23 @@
 ---
 description: Runs targeted web searches combined with Confluence context to produce a structured market research report, then publishes it to Confluence. Use for deep-dive research on a specific topic before writing a PRD or to justify a roadmap decision. Invoke with a topic; markets, competitors, and depth are optional.
+bmm_phase: "01_Accelerated_Context_Discovery"
+bmm_step: "market_research"
+bmm_agent: analyst
+bmm_runs: standalone_or_orchestrated
+output_file: "tools/bmm/output/research/research-findings.md"
+output_contract:
+  required_sections:
+    - Executive Summary
+    - Competitive Landscape
+    - Market Lens
+    - Opportunity Assessment
+    - Recommendations
+  min_recommendations: 3
+handoff_writes:
+  - key: research_complete
+    value: true
+  - key: research_output
+    value: "tools/bmm/output/research/research-findings.md"
 dependencies:
   - Confluence: search space, read pages, create page, add labels
   - WebSearch: targeted competitor and market queries

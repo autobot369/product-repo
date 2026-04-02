@@ -1,5 +1,28 @@
 ---
 description: Creates a fully structured PRD in Confluence from a minimal brief. Searches your Confluence space for related docs, avoids duplicates, and publishes under the configured parent page. Invoke with initiative name, business problem, user problem, ideal solution, and metrics.
+bmm_phase: "02_Solutioning_Sprint"
+bmm_step: "prd_authoring"
+bmm_agent: pm
+bmm_runs: standalone_or_orchestrated
+bmm_reads:
+  - "tools/bmm/output/briefs/product-brief.md"
+  - "tools/bmm/output/research/research-findings.md"
+output_file: "tools/bmm/output/prds/final-prd.md"
+output_contract:
+  required_sections:
+    - Problem & Opportunity
+    - Objective
+    - Success Metrics
+    - Functional Requirements
+    - Non-Functional Requirements
+    - User Journeys
+    - Out of Scope
+  min_success_metrics: 2
+handoff_writes:
+  - key: prd_complete
+    value: true
+  - key: prd_output
+    value: "tools/bmm/output/prds/final-prd.md"
 dependencies:
   - Confluence: search space, read pages, create/update child page, add labels
   - Jira: read epic reference (optional)

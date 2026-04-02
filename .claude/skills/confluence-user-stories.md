@@ -1,5 +1,24 @@
 ---
 description: Scans an entire Confluence space, identifies features without corresponding Jira stories, and bulk-creates user stories for the coverage gaps. Cross-references existing Jira tickets to avoid duplicates. Use when inheriting a space with undocumented features or needing full Jira coverage for an initiative. Invoke with a Confluence space key and Jira project key.
+bmm_phase: "04_One_Shot_Backlog"
+bmm_step: "story_intent"
+bmm_agent: pm
+bmm_runs: standalone_or_orchestrated
+bmm_reads:
+  - "tools/bmm/output/prds/final-prd.md"
+  - "tools/bmm/output/architecture-decisions.md"
+output_file: "tools/bmm/output/stories/story-intent.md"
+output_contract:
+  required_per_feature:
+    - user_story_statement
+    - acceptance_criteria
+    - prd_section_reference
+  handoff_to: user-stories
+handoff_writes:
+  - key: story_intent_complete
+    value: true
+  - key: story_intent_output
+    value: "tools/bmm/output/stories/story-intent.md"
 dependencies:
   - Confluence: retrieve space page list, read individual pages
   - Jira: search existing stories, create issues, link epic, add labels
