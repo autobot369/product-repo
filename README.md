@@ -1,4 +1,4 @@
-# Product Management Repository
+# PM-OS Repository
 
 A structured workspace for product teams — documentation, user journeys, PRDs, specs, experiments, and AI-assisted PM tooling. Built on [MkDocs Material](https://squidfunk.github.io/mkdocs-material/) for publishing and the [BMAD Method](https://github.com/bmad-method/BMAD-METHOD) for AI-assisted product workflows.
 
