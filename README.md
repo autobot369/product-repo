@@ -17,6 +17,7 @@ A structured workspace for product teams — documentation, user journeys, PRDs,
 │
 ├── tools/                 # Internal utilities
 │   ├── config.yml         # Shared non-secret configuration for all tools
+│   ├── setup/             # PM OS Wizard — interactive workspace setup CLI
 │   ├── bmm/               # PM workflow engine (concept → PRD → epics → stories)
 │   ├── confluence-migration/  # Migrates Confluence spaces into docs/ as Markdown
 │   ├── jira-monitor/      # Sprint, release, demand, and pipeline reporting
@@ -24,6 +25,8 @@ A structured workspace for product teams — documentation, user journeys, PRDs,
 │
 ├── .claude/               # AI agent personas and skill playbooks
 ├── tests/                 # Tests for tooling and automation
+├── setup.sh               # One-command workspace bootstrapper
+├── requirements.txt       # Consolidated Python dependencies
 ├── .env.example           # Credential template — copy to .env
 └── mkdocs.yml             # Documentation site configuration
 ```
@@ -41,63 +44,41 @@ A structured workspace for product teams — documentation, user journeys, PRDs,
 
 ---
 
-## Setup
+## Quick Start — PM OS Wizard
 
-### 1. Credentials
-
-```bash
-cp .env.example .env
-# Edit .env with your Atlassian email, API token, and Anthropic key
-```
-
-### 2. Configuration
-
-Edit `tools/config.yml` — single source of truth for all non-secret settings. Required fields to update:
-
-```yaml
-atlassian:
-  base_url: https://your-org.atlassian.net   # your Atlassian Cloud URL
-
-jira:
-  projects:
-    squad1: MYPROJECT    # add one entry per Jira project (used by jira-monitor and pm-workers)
-
-confluence:
-  spaces:
-    - key: TEAM          # Confluence space key agents read from and publish to
-      label: "Product Team"
-
-jira_monitor:
-  confluence:
-    sprint_reviews_parent:   ""   # Confluence page ID for sprint review reports
-    demand_review_page_id:   ""   # Confluence page ID for demand review digests
-    release_tracker_page_id: ""   # Confluence page ID for release tracker reports
-    pipeline_page_id:        ""   # Confluence page ID for feature pipeline reports
-
-pm_workers:
-  read_space:    TEAM    # space agents search for context
-  publish_space: TEAM    # space agents publish PRDs and research to
-  prd_parent_page_id:             ""   # parent page for new PRDs
-  market_research_parent_page_id: ""   # parent page for monthly research reports
-  default_jira_project: MYPROJECT
-  scheduler:
-    timezone: UTC        # pytz timezone string, e.g. "America/New_York"
-    topic:    "Tier 1 competitor and innovation trends monthly scan"
-```
-
-See each tool's README for the full config reference: [pm-workers](tools/pm-workers/README.md) · [jira-monitor](tools/jira-monitor/README.md) · [confluence-migration](tools/confluence-migration/README.md)
-
-### 3. Documentation site
+Clone the repo and run one command. The wizard handles everything: virtual environment, dependencies, configuration, and optional Confluence import.
 
 ```bash
-python -m venv .venv
-source .venv/bin/activate
-pip install mkdocs-material mkdocs-awesome-pages-plugin mkdocs-glightbox
-mkdocs serve          # http://localhost:8000
-mkdocs gh-deploy      # deploy to GitHub Pages
+git clone <your-fork-url>
+cd product-repo
+./setup.sh
 ```
 
-### 4. AI agents and skills
+The wizard walks you through 7 guided steps:
+
+| Step | What happens |
+|------|-------------|
+| 1 — Team Identity | Sets your squad name, PM name, and MkDocs site title |
+| 2 — Atlassian Credentials | Securely writes your email + API token to `.env` (never to tracked files) and validates live |
+| 3 — Jira | Registers your project keys and validates each one against the API |
+| 4 — Confluence | Maps your space key and optional parent page IDs for PRDs, research, and reports |
+| 5 — Claude / BMM | Selects your primary Claude model, language, and skill level |
+| 6 — Agent Templates | Opens each `.claude/agents/` persona file for you to personalise |
+| 7 — Migration *(optional)* | Imports your existing Confluence space into `docs/` as versioned Markdown |
+
+After setup:
+
+```bash
+mkdocs serve                        # preview your knowledge base at http://localhost:8000
+python -m tools.setup check         # verify all integrations are reachable
+python -m tools.setup reconfigure   # update any section later via menu
+```
+
+### Manual configuration (advanced)
+
+If you prefer to configure by hand, all non-secret settings live in `tools/config.yml` and credentials in `.env` (copy from `.env.example`). See each tool's README for the full reference: [pm-workers](tools/pm-workers/README.md) · [jira-monitor](tools/jira-monitor/README.md) · [confluence-migration](tools/confluence-migration/README.md)
+
+### AI agents and skills
 
 Agent personas live in `.claude/agents/` and slash-command skills in `.claude/skills/`. Use with Claude Code directly, or run the full PM workflow via the BMM engine.
 
@@ -107,6 +88,7 @@ Agent personas live in `.claude/agents/` and slash-command skills in `.claude/sk
 
 | Tool | What it does | Details |
 |------|-------------|---------|
+| **PM OS Wizard** | One-command interactive setup CLI — configures the full workspace for any team | [tools/setup/](tools/setup/) |
 | **BMM** | AI-assisted PM workflows: brief → PRD → epics → stories | [tools/bmm/README.md](tools/bmm/README.md) |
 | **Confluence Migration** | Converts Confluence spaces into versioned Markdown in `docs/` | [tools/confluence-migration/](tools/confluence-migration/) |
 | **Jira Monitor** | Sprint, release, and demand reporting published to Confluence | [tools/jira-monitor/README.md](tools/jira-monitor/README.md) |

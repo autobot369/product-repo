@@ -1,76 +1,154 @@
-# 🛠️ Skill & Capability Matrix
-> **Status:** Active | **Last Updated:** 2026-03-27
+# Skill & Capability Matrix
+> **Status:** Active | **Last Updated:** 2026-04-02
 
-Slash-command skills define what Claude executes — step-by-step playbooks invoked via a `/command`. This document maps product capabilities, team skill ownership, and the tooling stack.
+Slash-command skills are the **canonical execution layer** for this PM workspace. Every skill is a step-by-step playbook that declares its BMM pipeline phase, agent owner, output file contract, and handoff signals. Skills can be run standalone or as part of the orchestrated PM Execution Workflow.
+
+---
+
+## Skill Registry
+
+| Skill | Command | Agent | BMM Phase | Output |
+| :--- | :--- | :--- | :--- | :--- |
+| `create-product-brief.md` | `/create-product-brief` | John (pm) | 01 — Context Discovery | `tools/bmm/output/briefs/product-brief.md` |
+| `market-research.md` | `/market-research` | Mary (analyst) | 01 — Context Discovery | `tools/bmm/output/research/research-findings.md` |
+| `create-prd.md` | `/create-prd` | John (pm) | 02 — Solutioning Sprint | `tools/bmm/output/prds/final-prd.md` |
+| `ux-journeys.md` | `/ux-journeys` | Sally (ux-designer) | 02 — Solutioning Sprint | Inline into `final-prd.md` |
+| `create-architecture.md` | `/create-architecture` | Winston (architect) | 03 — Architecture | `tools/bmm/output/architecture-decisions.md` |
+| `confluence-user-stories.md` | `/confluence-user-stories` | John (pm) | 04 — Backlog | `tools/bmm/output/stories/story-intent.md` |
+| `user-stories.md` | `/user-stories` | Bob (sm) | 04 — Backlog | `tools/bmm/output/stories/` |
+
+---
+
+## Pipeline flow
+
+```
+Phase 01 — Context Discovery
+  /create-product-brief  (John)   →  briefs/product-brief.md
+  /market-research       (Mary)   →  research/research-findings.md
+  ↓ Gate: Strategic Alignment [party-mode: John + Mary + Winston]
+
+Phase 02 — Solutioning Sprint
+  /create-prd            (John)   →  prds/final-prd.md
+  /ux-journeys           (Sally)  →  embedded into final-prd.md
+  ↓ Gate: Technical Readiness [party-mode: John + Sally + Winston]
+
+Phase 03 — Architecture
+  /create-architecture   (Winston) →  architecture-decisions.md
+  ↓ Gate: Implementation Readiness [automated + optional party-mode]
+
+Phase 04 — One-Shot Backlog
+  /confluence-user-stories (John) →  stories/story-intent.md
+  /user-stories            (Bob)  →  stories/*.md + Jira push
+  ↓ Post-process: Gherkin validator → user approves publish
+```
+
+Run the full pipeline with one command:
+```
+Use @.claude/agents/pm.md → [RW] Run PM Execution Workflow
+```
 
 ---
 
 ## Product Capabilities (Functional)
 
-* **Skill: PRD Creation**
-  * *Description:* Generates a fully structured PRD in Confluence from a minimal brief.
-  * *Owner:* AG-PM (John)
-  * *Slash command:* `/create-prd`
-  * *Dependencies:* Confluence (search, read, create/update page, add labels), Jira (epic reference)
+### /create-product-brief
+- **Description:** Drafts a structured product brief — problem statement, target user, success metrics, and scope. Seeds the PRD. Skips if a brief already exists.
+- **Owner:** AG-PM (John)
+- **Standalone invoke:** `Initiative: [name]  Idea: [1–3 sentence description]`
+- **Dependencies:** Confluence (search related PRDs and research)
 
-* **Skill: User Story Generation**
-  * *Description:* Creates Jira user stories from a PRD URL or Confluence context search.
-  * *Owner:* AG-PM (John) / AG-SM (Bob)
-  * *Slash command:* `/user-stories`
-  * *Dependencies:* Confluence (search, read pages), Jira (search, create issues, get sprints, assign sprint)
+### /market-research
+- **Description:** Targeted web + Confluence research producing a structured market report published to Confluence.
+- **Owner:** AG-ANALYST (Mary)
+- **Standalone invoke:** `Topic: [area]  Markets: US, UK  Depth: full`
+- **Dependencies:** Confluence (search, read, create page), WebSearch
 
-* **Skill: Market Research**
-  * *Description:* Produces a structured market research report and publishes it to Confluence.
-  * *Owner:* AG-ANALYST (Mary)
-  * *Slash command:* `/market-research`
-  * *Dependencies:* Confluence (search, read, create page, add labels), Web search
+### /create-prd
+- **Description:** Full PRD authored from brief + research. Reads brief and research findings as primary inputs. Includes NFRs. Runs 12-step validation on completion.
+- **Owner:** AG-PM (John)
+- **Standalone invoke:** `Initiative: [name]  Business Problem: ...  User Problem: ...  Ideal Solution: ...  Metrics: ...`
+- **Dependencies:** Confluence (search, read, create/update page), Jira (epic reference)
 
-* **Skill: Confluence Coverage Audit**
-  * *Description:* Scans a Confluence space and bulk-creates Jira stories for undocumented features.
-  * *Owner:* AG-PM (John) / AG-SM (Bob)
-  * *Slash command:* `/confluence-user-stories`
-  * *Dependencies:* Confluence (read space, read pages), Jira (search, create issues, link epic, add labels)
+### /ux-journeys
+- **Description:** Maps user journeys (happy path, failure states, edge cases) and embeds them inline into the PRD's Functional Requirements section. No separate UX doc produced.
+- **Owner:** AG-UX (Sally)
+- **Standalone invoke:** `PRD: tools/bmm/output/prds/final-prd.md  Feature: [name]`
+- **Dependencies:** Confluence (design system, existing journey pages), `docs/user-journeys/`
+
+### /create-architecture
+- **Description:** Defines data model and API contracts for a locked PRD. Scoped to data-model-and-APIs only — no infrastructure. Produces ADR-lite decisions and risk flags.
+- **Owner:** AG-ARCH (Winston)
+- **Standalone invoke:** `PRD: tools/bmm/output/prds/final-prd.md`
+- **Dependencies:** Confluence (existing specs, ADRs), Jira (related technical epics)
+
+### /confluence-user-stories
+- **Description:** Scans Confluence space or reads PRD to produce story intent (user story statement + acceptance criteria + PRD trace). Handoff input for /user-stories.
+- **Owner:** AG-PM (John)
+- **Standalone invoke:** `Space: TEAM  Jira project: SQUAD1  Epic: SQUAD1-100`
+- **Dependencies:** Confluence (read pages), Jira (search stories, link epic)
+
+### /user-stories
+- **Description:** Converts story intent into full Gherkin stories (Given/When/Then) and pushes to Jira. Auto-selects template (Standard / Technical / Gherkin) per story.
+- **Owner:** AG-SM (Bob)
+- **Standalone invoke:** `PRD: [url]  Jira project: SQUAD1  Epic: SQUAD1-42  Board ID: 7`
+- **Dependencies:** Confluence (search, read pages), Jira (create issues, get sprints, assign)
 
 ---
 
 ## Team Skills (Operational)
 
-| Skill | Lead | Backup | Documentation |
+| Skill | Lead | Backup | File |
 | :--- | :--- | :--- | :--- |
-| PRD Writing | AG-PM (John) | AG-ANALYST (Mary) | [create-prd.md](create-prd.md) |
+| Product Brief | AG-PM (John) | AG-ANALYST (Mary) | [create-product-brief.md](create-product-brief.md) |
 | Market Research | AG-ANALYST (Mary) | AG-PM (John) | [market-research.md](market-research.md) |
-| Story Preparation | AG-SM (Bob) | AG-PM (John) | [user-stories.md](user-stories.md) |
-| Coverage Auditing | AG-SM (Bob) | AG-PM (John) | [confluence-user-stories.md](confluence-user-stories.md) |
-| Architecture Design | AG-ARCH (Winston) | — | [agents/architect.md](../agents/architect.md) |
-| UX Design | AG-UX (Sally) | — | [agents/ux-designer.md](../agents/ux-designer.md) |
+| PRD Writing | AG-PM (John) | AG-ANALYST (Mary) | [create-prd.md](create-prd.md) |
+| UX Journey Mapping | AG-UX (Sally) | — | [ux-journeys.md](ux-journeys.md) |
+| Architecture Design | AG-ARCH (Winston) | — | [create-architecture.md](create-architecture.md) |
+| Story Intent | AG-PM (John) | AG-SM (Bob) | [confluence-user-stories.md](confluence-user-stories.md) |
+| Gherkin Stories + Jira | AG-SM (Bob) | AG-PM (John) | [user-stories.md](user-stories.md) |
 
 ---
 
 ## Tooling Stack
 
 * **LLM:** claude-sonnet-4-6 — default model for all agents and skills (configured in `tools/bmm/config.yaml`)
-* **PM Workflow Engine:** BMM (`tools/bmm/core/workflow.xml`) — orchestrates multi-step agent workflows
+* **PM Workflow Engine:** BMM v2.0 (`tools/bmm/workflows/pm-execution.yaml`) — orchestrates the full pipeline via John as orchestrator
+* **Gate mechanism:** Party Mode (`tools/bmm/core/workflows/party-mode/`) — multi-agent alignment sessions at phase boundaries
 * **Knowledge Base:** `docs/` (MkDocs) + Confluence space (via Atlassian MCP) — agents read both for context
 * **Issue Tracking:** Jira (via Atlassian MCP) — story creation, sprint assignment, epic linking
-* **Design:** Figma (via Figma MCP) — referenced in PRDs; linked after UX kickoff
-* **Deployment:** MkDocs + GitHub Pages (`mkdocs gh-deploy`) — publishes `docs/` as a static site
+* **Handoff layer:** `tools/bmm/output/handoff-{N}.md` — phase boundary context written by orchestrator, read by next agent
 
 ---
 
-## Adding skills
+## Skill frontmatter spec
 
-A skill file must define:
-1. **Frontmatter** — `description` (≤30 words) and `dependencies` (every external service called)
-2. **Invoke** — parameters the user provides
-3. **Steps** — numbered `## N — {verb phrase}`, each a single imperative sentence or decision table
-4. **Output** — exact deliverable + `**Side effects:**` line for any external writes
-5. **Guidelines** — 4–6 hard constraints, ≤12 words each
+Every skill file must declare:
 
-Generate with: `python tools/agent-persona-skill-builder/builder.py --type skill`
+```yaml
+---
+description:     # ≤30 words
+bmm_phase:       # e.g. "02_Solutioning_Sprint" or "standalone"
+bmm_step:        # step name in pm-execution.yaml
+bmm_agent:       # pm | analyst | ux-designer | architect | sm
+bmm_runs:        # standalone_only | standalone_or_orchestrated
+output_file:     # path to primary output (or "inline" for embedded outputs)
+output_contract: # required_sections, min_counts etc.
+handoff_writes:  # list of key/value signals written to handoff file
+dependencies:    # external services called
+---
+```
+
+## Adding a new skill
+
+1. Copy an existing skill as a template
+2. Fill in all frontmatter fields including `bmm_phase` and `output_contract`
+3. Add the skill to the registry table in this README
+4. Add it to the `skills:` block in `tools/bmm/workflows/pm-execution.yaml` if it belongs to the pipeline
+5. Add it to the `Team Skills` table in `.claude/agents/README.md`
 
 ## See also
 
-- [.claude/agents/README.md](../agents/README.md) — agent registry and interaction logic
+- [.claude/agents/README.md](../agents/README.md) — agent registry, handover chain, interaction model
+- [tools/bmm/workflows/pm-execution.yaml](../../tools/bmm/workflows/pm-execution.yaml) — full pipeline definition
+- [tools/bmm/data/handoff-template.md](../../tools/bmm/data/handoff-template.md) — phase handoff contract template
 - [tools/pm-workers/README.md](../../tools/pm-workers/README.md) — CLI runner for programmatic skill execution
-- [templates/skill.md](../../tools/agent-persona-skill-builder/templates/skill.md) — skill file template
-- [templates/capability-registry.md](../../tools/agent-persona-skill-builder/templates/capability-registry.md) — this document's template

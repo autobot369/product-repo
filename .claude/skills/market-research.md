@@ -1,8 +1,31 @@
 ---
-description: Runs targeted web searches combined with Confluence context to produce a structured market research report, then publishes it to Confluence. Use for deep-dive research on a specific topic before writing a PRD or to justify a roadmap decision. Invoke with a topic; markets, competitors, and depth are optional.
+description: "Targeted web + Confluence research producing a structured market report published to Confluence. Use before writing a PRD or to justify a roadmap decision."
+version: "1.1.0"
+last_updated: "2026-04-02"
+bmm_phase: "01_Accelerated_Context_Discovery"
+bmm_step: "market_research"
+bmm_agent: analyst
+bmm_runs: standalone_or_orchestrated
+output_file: "tools/bmm/output/research/research-findings.md"
+output_contract:
+  required_sections:
+    - Executive Summary
+    - Competitive Landscape
+    - Market Lens
+    - Opportunity Assessment
+    - Recommendations
+  min_recommendations: 3
+handoff_writes:
+  - key: research_complete
+    value: true
+  - key: research_output
+    value: "tools/bmm/output/research/research-findings.md"
 dependencies:
-  - Confluence: search space, read pages, create page, add labels
-  - WebSearch: targeted competitor and market queries
+  confluence:
+    actions: [search, read, create]
+    required: false
+  web_search:
+    required: true
 ---
 
 # /market-research — Market Research
@@ -62,6 +85,17 @@ Confluence research report page containing all sections appropriate to the reque
 
 **Side effects:** Creates a Confluence page with labels `research`, `market-research`, `pm-agent-generated`.
 
+## Failure Modes
+
+| Condition | Behaviour |
+|---|---|
+| No `Topic` provided | Ask for topic before running any searches — do not proceed without it |
+| Web search returns no results for a competitor | Note "No material findings for [Competitor] in this area" — do not fabricate findings |
+| Confluence search unavailable | Proceed with web research only — note "Confluence context unavailable" in Executive Summary |
+| Finding older than 6 months | Flag with a "(potentially outdated — [date])" note inline |
+| `depth: summary` requested | Produce Executive Summary + Recommendations only — do not expand without explicit request |
+| Research findings file already exists | Present existing findings to user and ask: update or start fresh? |
+
 ## Guidelines
 
 - Do not hallucinate competitor features — if no strong signal exists, write "No material findings for [Competitor] in this area."
@@ -69,3 +103,7 @@ Confluence research report page containing all sections appropriate to the reque
 - If a finding maps to an existing PRD in Confluence, reference it by page link.
 - Flag any finding older than 6 months as potentially outdated.
 - Produce `depth: summary` as Executive Summary + Recommendations only — never expand without explicit request.
+- Calibrate explanation depth to `{user_skill_level}` from config:
+  - `beginner` — explain each research section before populating it; offer to walk through findings interactively
+  - `intermediate` — run all steps, present the full report, ask for feedback
+  - `expert` — output the report directly; skip section-by-section narration
