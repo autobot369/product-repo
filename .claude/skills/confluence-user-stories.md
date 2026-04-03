@@ -1,5 +1,5 @@
 ---
-description: "Phase 04 story intent: extracts user stories from PRD and architecture for Bob's Gherkin run. Standalone: scans a Confluence space for undocumented feature gaps."
+description: "Phase 04 story intent: extracts user stories from PRD and architecture for Ironhide's Gherkin run. Standalone: scans a Confluence space for undocumented feature gaps."
 version: "1.1.0"
 last_updated: "2026-04-02"
 bmm_phase: "04_One_Shot_Backlog"
@@ -36,7 +36,7 @@ dependencies:
 
 This skill operates in two distinct modes:
 
-**Orchestrated (Phase 04):** John reads `final-prd.md` and `architecture-decisions.md` to produce structured story intent — a user story statement, acceptance criteria, and PRD trace for each feature. Output is `story-intent.md`, which Bob's `/user-stories` run consumes directly.
+**Orchestrated (Phase 04):** Optimus Prime reads `final-prd.md` and `architecture-decisions.md` to produce structured story intent — a user story statement, acceptance criteria, and PRD trace for each feature. Output is `story-intent.md`, which Ironhide's `/user-stories` run consumes directly.
 
 **Standalone (coverage audit):** Given a Confluence space key and Jira project, scans the space for features without corresponding Jira stories and bulk-creates stories for the gaps. Use when inheriting a space with undocumented features.
 
@@ -86,7 +86,7 @@ For each extracted feature, write a story intent entry:
 **PRD reference:** §[section] — [requirement label]
 **Architecture reference:** [entity or endpoint if applicable]
 **Template hint:** [Standard | Technical | Gherkin] — why
-**Notes:** [any open question or dependency to resolve before Bob runs Gherkin]
+**Notes:** [any open question or dependency to resolve before Ironhide runs Gherkin]
 ```
 
 ### 3 — Write output
@@ -153,7 +153,7 @@ Include: total pages scanned, total features extracted, stories created (with ke
 
 ## Output
 
-**Orchestrated:** `tools/bmm/output/stories/story-intent.md` — structured intent consumed by Bob's `/user-stories` run.
+**Orchestrated:** `tools/bmm/output/stories/story-intent.md` — structured intent consumed by Ironhide's `/user-stories` run.
 
 **Standalone:** Jira issues created for every undocumented feature gap found in the specified Confluence space.
 

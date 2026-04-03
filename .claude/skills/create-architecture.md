@@ -50,7 +50,7 @@ PRD: tools/bmm/output/prds/final-prd.md
 Scope: data-model-and-apis     (default — do not expand to infrastructure)
 ```
 
-Or in orchestrated mode — Winston activates automatically after Technical Readiness gate approval.
+Or in orchestrated mode — Wheeljack activates automatically after Technical Readiness gate approval.
 
 ## 1 — Load and parse the PRD
 
@@ -60,7 +60,7 @@ Read `tools/bmm/output/prds/final-prd.md` completely. Extract:
 - All user journey steps — each step that involves data persistence or retrieval needs a model and an endpoint
 - Non-functional requirements — latency, throughput, and consistency constraints
 - Success metrics — understand the data events that must be tracked
-- Out of scope — hard boundaries on what Winston must not design for
+- Out of scope — hard boundaries on what Wheeljack must not design for
 
 Also read:
 - `docs/specs/` — existing technical specifications to avoid conflicting data models
@@ -162,7 +162,7 @@ Format each risk as:
 - **PRD requirement at risk:** §[X.Y]
 - **Description:** [what might go wrong]
 - **Proposed resolution:** [investigation needed, spike story, or accepted risk]
-- **Owner:** [Winston | John | Amelia]
+- **Owner:** [Wheeljack | Optimus Prime | Ironhide]
 ```
 
 Risks are not blockers — they are flags. The Implementation Readiness gate will determine whether they block Phase 04.
@@ -215,7 +215,7 @@ stepsCompleted: []
 
 `tools/bmm/output/architecture-decisions.md` — data model + API contracts + decisions + risks.
 
-**In orchestrated mode:** Winston runs sequentially after Phase 02 is locked. John and Sally are available for clarification queries but do not re-open the PRD. Output feeds the Implementation Readiness check directly.
+**In orchestrated mode:** Wheeljack runs sequentially after Phase 02 is locked. Optimus Prime and Arcee are available for clarification queries but do not re-open the PRD. Output feeds the Implementation Readiness check directly.
 
 ## Failure Modes
 
@@ -223,17 +223,17 @@ stepsCompleted: []
 |---|---|
 | `final-prd.md` not found | Stop — do not proceed. Ask user to complete `/create-prd` and confirm the PRD is locked before running this skill |
 | UX journeys section missing from PRD | Flag as a gap — note which journey steps are assumed absent. Do not block, but add a risk entry noting reduced API coverage confidence |
-| Functional requirement is ambiguous | Escalate to John — do not interpret silently. Note the ambiguity in Open Technical Risks with owner: John |
-| Journey step implies interaction not in PRD | Escalate to Sally — flag it in Open Technical Risks with owner: Sally. Do not design the journey unilaterally |
-| `min_decisions: 3` cannot be reached | Trivial decisions do not count — identify real trade-offs or escalate to John that the PRD may need more NFR clarity |
+| Functional requirement is ambiguous | Escalate to Optimus Prime — do not interpret silently. Note the ambiguity in Open Technical Risks with owner: Optimus Prime |
+| Journey step implies interaction not in PRD | Escalate to Arcee — flag it in Open Technical Risks with owner: Arcee. Do not design the journey unilaterally |
+| `min_decisions: 3` cannot be reached | Trivial decisions do not count — identify real trade-offs or escalate to Optimus Prime that the PRD may need more NFR clarity |
 | Conflicting data model found in `docs/specs/` | Surface the conflict as a Risk (severity: high) — do not silently override existing specs |
 
 ## Scope rules (strictly enforced)
 
 - **In scope:** data entities, relationships, API endpoints, auth patterns, indexing strategy, integration contracts
 - **Out of scope:** infrastructure (hosting, CI/CD, containers), frontend implementation, test strategy, observability setup
-- **Escalate to John** if a functional requirement is ambiguous enough to affect the data model
-- **Escalate to Sally** if a journey step implies a data interaction that isn't documented in the PRD
+- **Escalate to Optimus Prime** if a functional requirement is ambiguous enough to affect the data model
+- **Escalate to Arcee** if a journey step implies a data interaction that isn't documented in the PRD
 
 ## Guidelines
 

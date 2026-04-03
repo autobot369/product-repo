@@ -9,13 +9,13 @@ Slash-command skills are the **canonical execution layer** for this PM workspace
 
 | Skill | Command | Agent | BMM Phase | Output |
 | :--- | :--- | :--- | :--- | :--- |
-| `create-product-brief.md` | `/create-product-brief` | John (pm) | 01 — Context Discovery | `tools/bmm/output/briefs/product-brief.md` |
-| `market-research.md` | `/market-research` | Mary (analyst) | 01 — Context Discovery | `tools/bmm/output/research/research-findings.md` |
-| `create-prd.md` | `/create-prd` | John (pm) | 02 — Solutioning Sprint | `tools/bmm/output/prds/final-prd.md` |
-| `ux-journeys.md` | `/ux-journeys` | Sally (ux-designer) | 02 — Solutioning Sprint | Inline into `final-prd.md` |
-| `create-architecture.md` | `/create-architecture` | Winston (architect) | 03 — Architecture | `tools/bmm/output/architecture-decisions.md` |
-| `confluence-user-stories.md` | `/confluence-user-stories` | John (pm) | 04 — Backlog | `tools/bmm/output/stories/story-intent.md` |
-| `user-stories.md` | `/user-stories` | Bob (sm) | 04 — Backlog | `tools/bmm/output/stories/` |
+| `create-product-brief.md` | `/create-product-brief` | Optimus Prime (pm) | 01 — Context Discovery | `tools/bmm/output/briefs/product-brief.md` |
+| `market-research.md` | `/market-research` | Bumblebee (analyst) | 01 — Context Discovery | `tools/bmm/output/research/research-findings.md` |
+| `create-prd.md` | `/create-prd` | Optimus Prime (pm) | 02 — Solutioning Sprint | `tools/bmm/output/prds/final-prd.md` |
+| `ux-journeys.md` | `/ux-journeys` | Arcee (ux-designer) | 02 — Solutioning Sprint | Inline into `final-prd.md` |
+| `create-architecture.md` | `/create-architecture` | Wheeljack (architect) | 03 — Architecture | `tools/bmm/output/architecture-decisions.md` |
+| `confluence-user-stories.md` | `/confluence-user-stories` | Optimus Prime (pm) | 04 — Backlog | `tools/bmm/output/stories/story-intent.md` |
+| `user-stories.md` | `/user-stories` | Ironhide (sm) | 04 — Backlog | `tools/bmm/output/stories/` |
 
 ---
 
@@ -23,22 +23,22 @@ Slash-command skills are the **canonical execution layer** for this PM workspace
 
 ```
 Phase 01 — Context Discovery
-  /create-product-brief  (John)   →  briefs/product-brief.md
-  /market-research       (Mary)   →  research/research-findings.md
-  ↓ Gate: Strategic Alignment [party-mode: John + Mary + Winston]
+  /create-product-brief  (Optimus Prime)   →  briefs/product-brief.md
+  /market-research       (Bumblebee)   →  research/research-findings.md
+  ↓ Gate: Strategic Alignment [party-mode: Optimus Prime + Bumblebee + Wheeljack]
 
 Phase 02 — Solutioning Sprint
-  /create-prd            (John)   →  prds/final-prd.md
-  /ux-journeys           (Sally)  →  embedded into final-prd.md
-  ↓ Gate: Technical Readiness [party-mode: John + Sally + Winston]
+  /create-prd            (Optimus Prime)   →  prds/final-prd.md
+  /ux-journeys           (Arcee)  →  embedded into final-prd.md
+  ↓ Gate: Technical Readiness [party-mode: Optimus Prime + Arcee + Wheeljack]
 
 Phase 03 — Architecture
-  /create-architecture   (Winston) →  architecture-decisions.md
+  /create-architecture   (Wheeljack) →  architecture-decisions.md
   ↓ Gate: Implementation Readiness [automated + optional party-mode]
 
 Phase 04 — One-Shot Backlog
-  /confluence-user-stories (John) →  stories/story-intent.md
-  /user-stories            (Bob)  →  stories/*.md + Jira push
+  /confluence-user-stories (Optimus Prime) →  stories/story-intent.md
+  /user-stories            (Ironhide)  →  stories/*.md + Jira push
   ↓ Post-process: Gherkin validator → user approves publish
 ```
 
@@ -53,43 +53,43 @@ Use @.claude/agents/pm.md → [RW] Run PM Execution Workflow
 
 ### /create-product-brief
 - **Description:** Drafts a structured product brief — problem statement, target user, success metrics, and scope. Seeds the PRD. Skips if a brief already exists.
-- **Owner:** AG-PM (John)
+- **Owner:** AG-PM (Optimus Prime)
 - **Standalone invoke:** `Initiative: [name]  Idea: [1–3 sentence description]`
 - **Dependencies:** Confluence (search related PRDs and research)
 
 ### /market-research
 - **Description:** Targeted web + Confluence research producing a structured market report published to Confluence.
-- **Owner:** AG-ANALYST (Mary)
+- **Owner:** AG-ANALYST (Bumblebee)
 - **Standalone invoke:** `Topic: [area]  Markets: US, UK  Depth: full`
 - **Dependencies:** Confluence (search, read, create page), WebSearch
 
 ### /create-prd
 - **Description:** Full PRD authored from brief + research. Reads brief and research findings as primary inputs. Includes NFRs. Runs 12-step validation on completion.
-- **Owner:** AG-PM (John)
+- **Owner:** AG-PM (Optimus Prime)
 - **Standalone invoke:** `Initiative: [name]  Business Problem: ...  User Problem: ...  Ideal Solution: ...  Metrics: ...`
 - **Dependencies:** Confluence (search, read, create/update page), Jira (epic reference)
 
 ### /ux-journeys
 - **Description:** Maps user journeys (happy path, failure states, edge cases) and embeds them inline into the PRD's Functional Requirements section. No separate UX doc produced.
-- **Owner:** AG-UX (Sally)
+- **Owner:** AG-UX (Arcee)
 - **Standalone invoke:** `PRD: tools/bmm/output/prds/final-prd.md  Feature: [name]`
 - **Dependencies:** Confluence (design system, existing journey pages), `docs/user-journeys/`
 
 ### /create-architecture
 - **Description:** Defines data model and API contracts for a locked PRD. Scoped to data-model-and-APIs only — no infrastructure. Produces ADR-lite decisions and risk flags.
-- **Owner:** AG-ARCH (Winston)
+- **Owner:** AG-ARCH (Wheeljack)
 - **Standalone invoke:** `PRD: tools/bmm/output/prds/final-prd.md`
 - **Dependencies:** Confluence (existing specs, ADRs), Jira (related technical epics)
 
 ### /confluence-user-stories
 - **Description:** Scans Confluence space or reads PRD to produce story intent (user story statement + acceptance criteria + PRD trace). Handoff input for /user-stories.
-- **Owner:** AG-PM (John)
+- **Owner:** AG-PM (Optimus Prime)
 - **Standalone invoke:** `Space: TEAM  Jira project: SQUAD1  Epic: SQUAD1-100`
 - **Dependencies:** Confluence (read pages), Jira (search stories, link epic)
 
 ### /user-stories
 - **Description:** Converts story intent into full Gherkin stories (Given/When/Then) and pushes to Jira. Auto-selects template (Standard / Technical / Gherkin) per story.
-- **Owner:** AG-SM (Bob)
+- **Owner:** AG-SM (Ironhide)
 - **Standalone invoke:** `PRD: [url]  Jira project: SQUAD1  Epic: SQUAD1-42  Board ID: 7`
 - **Dependencies:** Confluence (search, read pages), Jira (create issues, get sprints, assign)
 
@@ -99,20 +99,20 @@ Use @.claude/agents/pm.md → [RW] Run PM Execution Workflow
 
 | Skill | Lead | Backup | File |
 | :--- | :--- | :--- | :--- |
-| Product Brief | AG-PM (John) | AG-ANALYST (Mary) | [create-product-brief.md](create-product-brief.md) |
-| Market Research | AG-ANALYST (Mary) | AG-PM (John) | [market-research.md](market-research.md) |
-| PRD Writing | AG-PM (John) | AG-ANALYST (Mary) | [create-prd.md](create-prd.md) |
-| UX Journey Mapping | AG-UX (Sally) | — | [ux-journeys.md](ux-journeys.md) |
-| Architecture Design | AG-ARCH (Winston) | — | [create-architecture.md](create-architecture.md) |
-| Story Intent | AG-PM (John) | AG-SM (Bob) | [confluence-user-stories.md](confluence-user-stories.md) |
-| Gherkin Stories + Jira | AG-SM (Bob) | AG-PM (John) | [user-stories.md](user-stories.md) |
+| Product Brief | AG-PM (Optimus Prime) | AG-ANALYST (Bumblebee) | [create-product-brief.md](create-product-brief.md) |
+| Market Research | AG-ANALYST (Bumblebee) | AG-PM (Optimus Prime) | [market-research.md](market-research.md) |
+| PRD Writing | AG-PM (Optimus Prime) | AG-ANALYST (Bumblebee) | [create-prd.md](create-prd.md) |
+| UX Journey Mapping | AG-UX (Arcee) | — | [ux-journeys.md](ux-journeys.md) |
+| Architecture Design | AG-ARCH (Wheeljack) | — | [create-architecture.md](create-architecture.md) |
+| Story Intent | AG-PM (Optimus Prime) | AG-SM (Ironhide) | [confluence-user-stories.md](confluence-user-stories.md) |
+| Gherkin Stories + Jira | AG-SM (Ironhide) | AG-PM (Optimus Prime) | [user-stories.md](user-stories.md) |
 
 ---
 
 ## Tooling Stack
 
 * **LLM:** claude-sonnet-4-6 — default model for all agents and skills (configured in `tools/bmm/config.yaml`)
-* **PM Workflow Engine:** BMM v2.0 (`tools/bmm/workflows/pm-execution.yaml`) — orchestrates the full pipeline via John as orchestrator
+* **PM Workflow Engine:** BMM v2.0 (`tools/bmm/workflows/pm-execution.yaml`) — orchestrates the full pipeline via Optimus Prime as orchestrator
 * **Gate mechanism:** Party Mode (`tools/bmm/core/workflows/party-mode/`) — multi-agent alignment sessions at phase boundaries
 * **Knowledge Base:** `docs/` (MkDocs) + Confluence space (via Atlassian MCP) — agents read both for context
 * **Issue Tracking:** Jira (via Atlassian MCP) — story creation, sprint assignment, epic linking

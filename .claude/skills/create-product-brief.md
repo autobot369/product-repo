@@ -65,7 +65,7 @@ Search Confluence for related PRDs, research reports, and prior briefs using the
 - Surface any existing data or research that supports the brief
 - Identify terminology the team already uses for this space
 
-Check `tools/bmm/output/research/research-findings.md` if it exists — pre-populate the brief's opportunity data from Mary's research.
+Check `tools/bmm/output/research/research-findings.md` if it exists — pre-populate the brief's opportunity data from Bumblebee's research.
 
 ## 2 — Discover missing fields
 
@@ -143,7 +143,7 @@ Iterate on feedback before marking complete.
 
 `tools/bmm/output/briefs/product-brief.md` — fully populated product brief ready to seed the PRD.
 
-**In orchestrated mode:** John writes the brief concurrently while Mary runs `/market-research`. Both outputs feed the Strategic Alignment gate.
+**In orchestrated mode:** Optimus Prime writes the brief concurrently while Bumblebee runs `/market-research`. Both outputs feed the Strategic Alignment gate.
 
 ## Failure Modes
 

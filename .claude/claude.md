@@ -98,13 +98,11 @@ Specialized agent instructions live in `.claude/agents/`. Each file describes co
 
 | Agent | Persona | Best for |
 |---|---|---|
-| `pm.md` | John | PRD creation, requirements, stakeholder alignment. **Pipeline orchestrator** for the full PM execution workflow |
-| `analyst.md` | Mary | Market research, competitive analysis, product briefs |
-| `architect.md` | Winston | Tech feasibility, API/data model decisions, ADRs |
-| `ux-designer.md` | Sally | User journey mapping, interaction design (inline into PRD) |
-| `sm.md` | Bob | Sprint planning, Gherkin story authoring, Jira push |
-| `dev.md` | Amelia | Story-level specs, implementation notes |
-| `qa.md` | Quinn | Test plans, acceptance criteria review |
+| `pm.md` | Optimus Prime | PRD creation, requirements, stakeholder alignment. **Pipeline orchestrator** for the full PM execution workflow |
+| `analyst.md` | Bumblebee | Market research, competitive analysis, product briefs |
+| `architect.md` | Wheeljack | Tech feasibility, API/data model decisions, ADRs |
+| `ux-designer.md` | Arcee | User journey mapping, interaction design (inline into PRD) |
+| `sm.md` | Ironhide | Sprint planning, Gherkin story authoring, Jira push |
 
 **Invoke an agent:**
 ```
@@ -118,13 +116,13 @@ Skills are the canonical execution layer — step-by-step playbooks invoked via 
 
 | Skill | Command | Agent | BMM Phase |
 |---|---|---|---|
-| `create-product-brief.md` | `/create-product-brief` | John (pm) | 01 — Context Discovery |
-| `market-research.md` | `/market-research` | Mary (analyst) | 01 — Context Discovery |
-| `create-prd.md` | `/create-prd` | John (pm) | 02 — Solutioning Sprint |
-| `ux-journeys.md` | `/ux-journeys` | Sally (ux-designer) | 02 — Solutioning Sprint |
-| `create-architecture.md` | `/create-architecture` | Winston (architect) | 03 — Architecture |
-| `confluence-user-stories.md` | `/confluence-user-stories` | John (pm) | 04 — Backlog |
-| `user-stories.md` | `/user-stories` | Bob (sm) | 04 — Backlog |
+| `create-product-brief.md` | `/create-product-brief` | Optimus Prime (pm) | 01 — Context Discovery |
+| `market-research.md` | `/market-research` | Bumblebee (analyst) | 01 — Context Discovery |
+| `create-prd.md` | `/create-prd` | Optimus Prime (pm) | 02 — Solutioning Sprint |
+| `ux-journeys.md` | `/ux-journeys` | Arcee (ux-designer) | 02 — Solutioning Sprint |
+| `create-architecture.md` | `/create-architecture` | Wheeljack (architect) | 03 — Architecture |
+| `confluence-user-stories.md` | `/confluence-user-stories` | Optimus Prime (pm) | 04 — Backlog |
+| `user-stories.md` | `/user-stories` | Ironhide (sm) | 04 — Backlog |
 
 Skills can be run standalone or as part of the orchestrated pipeline. See `.claude/skills/README.md` for the full capability matrix.
 
@@ -142,7 +140,7 @@ Use @.claude/agents/pm.md
 → Select: [RW] Run PM Execution Workflow
 ```
 
-John (pm) acts as orchestrator — he embodies each agent in sequence, runs the relevant skill per phase, writes handoff context between phases, and facilitates party-mode gates. No manual agent switching required.
+Optimus Prime (pm) acts as orchestrator — he embodies each agent in sequence, runs the relevant skill per phase, writes handoff context between phases, and facilitates party-mode gates. No manual agent switching required.
 
 **Or run individual skills:**
 ```
@@ -158,19 +156,19 @@ John (pm) acts as orchestrator — he embodies each agent in sequence, runs the 
 
 ```
 Phase 01 — Context Discovery
-  John (/create-product-brief) + Mary (/market-research)
-  ↓ Gate: Strategic Alignment [party-mode: John + Mary + Winston]
+  Optimus Prime (/create-product-brief) + Bumblebee (/market-research)
+  ↓ Gate: Strategic Alignment [party-mode: Optimus Prime + Bumblebee + Wheeljack]
 
 Phase 02 — Solutioning Sprint
-  John (/create-prd) + Sally (/ux-journeys inline)
-  ↓ Gate: Technical Readiness [party-mode: John + Sally + Winston]
+  Optimus Prime (/create-prd) + Arcee (/ux-journeys inline)
+  ↓ Gate: Technical Readiness [party-mode: Optimus Prime + Arcee + Wheeljack]
 
 Phase 03 — Architecture
-  Winston (/create-architecture) → automated readiness check
+  Wheeljack (/create-architecture) → automated readiness check
   ↓ Gate: Implementation Readiness [auto-pass or targeted party-mode]
 
 Phase 04 — One-Shot Backlog
-  John (/confluence-user-stories intent) → Bob (/user-stories Gherkin + Jira)
+  Optimus Prime (/confluence-user-stories intent) → Ironhide (/user-stories Gherkin + Jira)
   ↓ Post-process: Gherkin validator → user approves publish
 ```
 

@@ -9,19 +9,17 @@ This document describes the agent roster, orchestration model, gate protocol, an
 
 | Agent ID | File | Persona | Role in Pipeline | Primary Model |
 | :--- | :--- | :--- | :--- | :--- |
-| `AG-PM` | `pm.md` | John | **Pipeline Orchestrator** — owns all phases, embodies other agents in sequence, runs gates | claude-sonnet-4-6 |
-| `AG-ANALYST` | `analyst.md` | Mary | Phase 01 — market research, competitive analysis, product briefs | claude-sonnet-4-6 |
-| `AG-UX` | `ux-designer.md` | Sally | Phase 02 — user journey mapping, inline UX into PRD | claude-sonnet-4-6 |
-| `AG-ARCH` | `architect.md` | Winston | Phase 03 — data model, API contracts, ADRs, gate challenger | claude-sonnet-4-6 |
-| `AG-SM` | `sm.md` | Bob | Phase 04 — Gherkin story authoring, Jira push, Gherkin validation | claude-sonnet-4-6 |
-| `AG-DEV` | `dev.md` | Amelia | Standalone — story-level specs, implementation notes | claude-sonnet-4-6 |
-| `AG-QA` | `qa.md` | Quinn | Standalone — test plans, acceptance criteria review | claude-sonnet-4-6 |
+| `AG-PM` | `pm.md` | Optimus Prime | **Pipeline Orchestrator** — owns all phases, embodies other agents in sequence, runs gates | claude-sonnet-4-6 |
+| `AG-ANALYST` | `analyst.md` | Bumblebee | Phase 01 — market research, competitive analysis, product briefs | claude-sonnet-4-6 |
+| `AG-UX` | `ux-designer.md` | Arcee | Phase 02 — user journey mapping, inline UX into PRD | claude-sonnet-4-6 |
+| `AG-ARCH` | `architect.md` | Wheeljack | Phase 03 — data model, API contracts, ADRs, gate challenger | claude-sonnet-4-6 |
+| `AG-SM` | `sm.md` | Ironhide | Phase 04 — Gherkin story authoring, Jira push, Gherkin validation | claude-sonnet-4-6 |
 
 ---
 
 ## Orchestration Model
 
-John (AG-PM) is the **pipeline orchestrator**. When the user selects `[RW] Run PM Execution Workflow`, John:
+Optimus Prime (AG-PM) is the **pipeline orchestrator**. When the user selects `[RW] Run PM Execution Workflow`, Optimus Prime:
 
 1. Loads `tools/bmm/workflows/pm-execution.yaml` and reads all phases, gates, and skill bindings
 2. Executes each phase by **embodying the relevant agent** — loading their `.md` file and adopting their persona fully for the duration of that step
@@ -42,34 +40,34 @@ Use @.claude/agents/pm.md → [RW] Run PM Execution Workflow
 
 ```
 Phase 01 — Context Discovery
-  AG-ANALYST (Mary)   → /market-research        → research/research-findings.md
-  AG-PM (John)        → /create-product-brief   → briefs/product-brief.md
+  AG-ANALYST (Bumblebee)   → /market-research        → research/research-findings.md
+  AG-PM (Optimus Prime)        → /create-product-brief   → briefs/product-brief.md
   ──────────────────────────────────────────────────────────────
-  Gate: Strategic Alignment  [party-mode: John + Mary + Winston]
+  Gate: Strategic Alignment  [party-mode: Optimus Prime + Bumblebee + Wheeljack]
   Outcome: go | amend-brief | no-go
 
 Phase 02 — Solutioning Sprint
-  AG-PM (John)        → /create-prd             → prds/final-prd.md
-  AG-UX (Sally)       → /ux-journeys            → inline into final-prd.md
+  AG-PM (Optimus Prime)        → /create-prd             → prds/final-prd.md
+  AG-UX (Arcee)       → /ux-journeys            → inline into final-prd.md
   PRD validator runs automatically before gate
   ──────────────────────────────────────────────────────────────
-  Gate: Technical Readiness  [party-mode: John + Sally + Winston]
+  Gate: Technical Readiness  [party-mode: Optimus Prime + Arcee + Wheeljack]
   Outcome: go | open-items | no-go
 
 Phase 03 — Architecture
-  AG-ARCH (Winston)   → /create-architecture    → architecture-decisions.md
+  AG-ARCH (Wheeljack)   → /create-architecture    → architecture-decisions.md
   Readiness check runs automatically
   ──────────────────────────────────────────────────────────────
-  Gate: Implementation Readiness  [auto-pass or party-mode: John + Winston]
+  Gate: Implementation Readiness  [auto-pass or party-mode: Optimus Prime + Wheeljack]
   Outcome: ready | gaps-found (targeted Phase 02 return)
 
 Phase 04 — One-Shot Backlog
-  AG-PM (John)        → /confluence-user-stories → stories/story-intent.md
-  AG-SM (Bob)         → /user-stories            → stories/*.md + Jira
+  AG-PM (Optimus Prime)        → /confluence-user-stories → stories/story-intent.md
+  AG-SM (Ironhide)         → /user-stories            → stories/*.md + Jira
   Gherkin validator runs automatically
   ──────────────────────────────────────────────────────────────
   Gate: Backlog Complete  [automated]
-  Outcome: complete | validator-failures (Bob re-runs failing stories only)
+  Outcome: complete | validator-failures (Ironhide re-runs failing stories only)
 ```
 
 ---
@@ -80,9 +78,9 @@ Phase boundary context is carried via handoff files — not verbal context or as
 
 | Phase end | Handoff file | Written by | Read by |
 | :--- | :--- | :--- | :--- |
-| Phase 01 | `tools/bmm/output/handoff-01.md` | John (PM) | John (PM) at Phase 02 start |
-| Phase 02 | `tools/bmm/output/handoff-02.md` | John (PM) | Winston (Arch) at Phase 03 start |
-| Phase 03 | `tools/bmm/output/handoff-03.md` | Winston (Arch) | John (PM) at Phase 04 start |
+| Phase 01 | `tools/bmm/output/handoff-01.md` | Optimus Prime (PM) | Optimus Prime (PM) at Phase 02 start |
+| Phase 02 | `tools/bmm/output/handoff-02.md` | Optimus Prime (PM) | Wheeljack (Arch) at Phase 03 start |
+| Phase 03 | `tools/bmm/output/handoff-03.md` | Wheeljack (Arch) | Optimus Prime (PM) at Phase 04 start |
 
 Each handoff records: outputs produced, gate outcome + rationale, key decisions, assumptions to carry forward, items not to re-open, and orchestrator signals (boolean flags checked by the pipeline).
 
@@ -96,9 +94,9 @@ All phase gates use **Party Mode** (`tools/bmm/core/workflows/party-mode/workflo
 
 | Gate | Mechanism | Participants | Outcome options |
 | :--- | :--- | :--- | :--- |
-| Strategic Alignment (01→02) | Party Mode | John + Mary + Winston | go / amend-brief / no-go |
-| Technical Readiness (02→03) | Party Mode | John + Sally + Winston | go / open-items / no-go |
-| Implementation Readiness (03→04) | Auto + optional Party Mode | John + Winston | ready / gaps-found |
+| Strategic Alignment (01→02) | Party Mode | Optimus Prime + Bumblebee + Wheeljack | go / amend-brief / no-go |
+| Technical Readiness (02→03) | Party Mode | Optimus Prime + Arcee + Wheeljack | go / open-items / no-go |
+| Implementation Readiness (03→04) | Auto + optional Party Mode | Optimus Prime + Wheeljack | ready / gaps-found |
 | Backlog Complete (04→publish) | Automated | — | complete / validator-failures |
 
 Gate rules:
@@ -113,7 +111,7 @@ Gate rules:
 
 Party Mode (`[PM]` menu item on any agent) spawns a structured multi-agent discussion. The orchestrator loads each participant's agent file and embodies them in turn, maintaining strict persona consistency.
 
-**Gate use:** John launches party mode at each phase gate with the declared participants and agenda.
+**Gate use:** Optimus Prime launches party mode at each phase gate with the declared participants and agenda.
 
 **Ad-hoc use:** Any agent can invoke `[PM]` for open-ended brainstorming or cross-agent critique outside the pipeline.
 

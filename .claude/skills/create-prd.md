@@ -78,7 +78,7 @@ Build the full PRD using this structure:
 | Matching page already exists | Update it rather than creating a duplicate |
 | Metric or claim can't be sourced from context | Mark as placeholder — never invent data |
 
-Leave a `<!-- Sally: embed journeys here -->` placeholder in the Functional Requirements section — do not author UX journeys yourself.
+Leave a `<!-- Arcee: embed journeys here -->` placeholder in the Functional Requirements section — do not author UX journeys yourself.
 
 ## 3 — Create or update Confluence page
 
@@ -121,7 +121,7 @@ Confluence page containing the fully structured PRD, published under the configu
 
 - Never hallucinate product data — if a metric can't be sourced from Confluence context, mark it as a placeholder.
 - Do not generate stories in this skill — that is the job of `/user-stories`.
-- Do not author UX journeys — leave the placeholder for Sally's `/ux-journeys` run.
+- Do not author UX journeys — leave the placeholder for Arcee's `/ux-journeys` run.
 - If the initiative already has an active Jira epic, note it in the header table.
 - Keep requirement statements in user story format: *As a [persona], I want [action], so that [benefit].*
 - Calibrate explanation depth to `{user_skill_level}` from config:

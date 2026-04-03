@@ -2,14 +2,14 @@ name: PM-Focused Concept-to-Story Flow
 version: 2.0.0
 description: >
   Full PM execution workflow — concept → research → PRD+UX → architecture → stories.
-  Orchestrated by John (pm agent) acting as pipeline owner across all phases.
+  Orchestrated by Optimus Prime (pm agent) acting as pipeline owner across all phases.
   Skills are the canonical execution layer; BMM workflows in tools/bmm/workflows/
   are reference implementations only — skills take precedence.
 
   Execution model: interleaved single-session (one Claude Code context).
-  Concurrency: interleaved (John and Mary run in sequence within the same session,
+  Concurrency: interleaved (Optimus Prime and Bumblebee run in sequence within the same session,
   presented to the user as concurrent progress).
-  Gates: party-mode sessions — Winston joins as challenger, not as a workflow runner.
+  Gates: party-mode sessions — Wheeljack joins as challenger, not as a workflow runner.
   Handoff: each phase writes tools/bmm/output/handoff-{phase}.md before the gate runs.
 
 # ── Skill registry ──────────────────────────────────────────────────────────────
@@ -28,7 +28,7 @@ skills:
 
 # ── Output contract registry ────────────────────────────────────────────────────
 # Each phase must satisfy its output contract before its gate runs.
-# The orchestrator (John) checks these contracts before invoking party mode.
+# The orchestrator (Optimus Prime) checks these contracts before invoking party mode.
 
 output_contracts:
   phase_01:
@@ -45,7 +45,7 @@ output_contracts:
       file: "tools/bmm/output/prds/final-prd.md"
       required_sections: [Problem & Opportunity, Objective, Success Metrics, Functional Requirements, Non-Functional Requirements, User Journeys, Out of Scope]
       min_success_metrics: 2
-      ux_journeys_embedded: true   # Sally's output must be present before gate
+      ux_journeys_embedded: true   # Arcee's output must be present before gate
 
   phase_03:
     architecture:
@@ -71,8 +71,8 @@ phases:
   # ────────────────────────────────────────────────────────────────────────────
   - phase: 01_Accelerated_Context_Discovery
     label: "Phase 01 — Accelerated Context Discovery"
-    orchestrator: pm              # John drives sequencing
-    execution_model: interleaved  # Mary then John, presented as concurrent progress
+    orchestrator: pm              # Optimus Prime drives sequencing
+    execution_model: interleaved  # Bumblebee then Optimus Prime, presented as concurrent progress
 
     steps:
 
@@ -81,23 +81,23 @@ phases:
         agent: pm
         exec: "{project-root}/tools/bmm/tasks/remote-context-discovery.md"
         description: >
-          John runs remote context discovery first — search Confluence and Jira
+          Optimus Prime runs remote context discovery first — search Confluence and Jira
           for related PRDs, research, and prior briefs. Results are shared as
           context for both the brief and the research steps.
 
       - name: market_research
-        label: "Market Research — Mary"
+        label: "Market Research — Bumblebee"
         agent: analyst
         skill: ".claude/skills/market-research.md"
         bmm_workflow: "{project-root}/tools/bmm/workflows/1-analysis/research/workflow-market-research.md"
         output: "tools/bmm/output/research/research-findings.md"
         description: >
-          John loads Mary's agent file (.claude/agents/analyst.md) and embodies her
+          Optimus Prime loads Bumblebee's agent file (.claude/agents/analyst.md) and embodies her
           persona. Runs /market-research skill. Output: research-findings.md.
           On completion, signals research_complete in handoff file.
 
       - name: product_brief
-        label: "Product Brief — John"
+        label: "Product Brief — Optimus Prime"
         agent: pm
         skill: ".claude/skills/create-product-brief.md"
         bmm_workflow: "{project-root}/tools/bmm/workflows/1-analysis/create-product-brief/workflow.md"
@@ -105,7 +105,7 @@ phases:
           skip_if_exists: true
         output: "tools/bmm/output/briefs/product-brief.md"
         description: >
-          John resumes as himself. Runs /create-product-brief skill.
+          Optimus Prime resumes as himself. Runs /create-product-brief skill.
           Reads research-findings.md if complete — pre-populates opportunity data.
           On completion, signals brief_complete in handoff file.
 
@@ -116,7 +116,7 @@ phases:
         template: "{project-root}/tools/bmm/data/handoff-template.md"
         output: "tools/bmm/output/handoff-01.md"
         description: >
-          John writes the phase handoff doc. Records outputs produced, open questions,
+          Optimus Prime writes the phase handoff doc. Records outputs produced, open questions,
           and key context for the gate and Phase 02.
 
     gate:
@@ -126,15 +126,15 @@ phases:
       party_mode_workflow: "{project-root}/tools/bmm/core/workflows/party-mode/workflow.md"
       participants: [analyst, pm, architect]
       participant_roles:
-        analyst: "Mary presents research findings and surface-level market risks"
-        pm:      "John presents the product brief — problem, user, metrics, scope"
-        architect: "Winston challenges technical feasibility and surfaces blockers"
+        analyst: "Bumblebee presents research findings and surface-level market risks"
+        pm:      "Optimus Prime presents the product brief — problem, user, metrics, scope"
+        architect: "Wheeljack challenges technical feasibility and surfaces blockers"
       agenda:
-        - "Mary: 3-minute research summary — top 3 findings that affect the brief"
-        - "John: brief walkthrough — problem, user, metrics, scope"
-        - "Winston: feasibility challenge — what needs investigation before Phase 02?"
+        - "Bumblebee: 3-minute research summary — top 3 findings that affect the brief"
+        - "Optimus Prime: brief walkthrough — problem, user, metrics, scope"
+        - "Wheeljack: feasibility challenge — what needs investigation before Phase 02?"
         - "All: agree on outcome"
-      output_contract_check: phase_01   # John checks contracts before launching party mode
+      output_contract_check: phase_01   # Optimus Prime checks contracts before launching party mode
       outcomes:
         go:
           description: "All three aligned — proceed to Phase 02"
@@ -155,7 +155,7 @@ phases:
   - phase: 02_Solutioning_Sprint
     label: "Phase 02 — Solutioning Sprint"
     orchestrator: pm
-    execution_model: interleaved  # John then Sally, building into the same file
+    execution_model: interleaved  # Optimus Prime then Arcee, building into the same file
     prerequisite: gate_01_passed
 
     steps:
@@ -166,11 +166,11 @@ phases:
         action: read_handoff
         file: "tools/bmm/output/handoff-01.md"
         description: >
-          John reads handoff-01.md completely before starting. Carries forward all
-          context, open questions, and Winston's feasibility notes into the PRD.
+          Optimus Prime reads handoff-01.md completely before starting. Carries forward all
+          context, open questions, and Wheeljack's feasibility notes into the PRD.
 
       - name: prd_authoring
-        label: "PRD Authoring — John"
+        label: "PRD Authoring — Optimus Prime"
         agent: pm
         skill: ".claude/skills/create-prd.md"
         bmm_workflow: "{project-root}/tools/bmm/workflows/2-plan-workflows/create-prd/workflow-create-prd.md"
@@ -182,13 +182,13 @@ phases:
             - "tools/bmm/output/research/research-findings.md"
         output: "tools/bmm/output/prds/final-prd.md"
         description: >
-          John authors the full PRD. Reads brief + research as primary inputs.
+          Optimus Prime authors the full PRD. Reads brief + research as primary inputs.
           Leaves the User Journeys subsection of Functional Requirements empty —
-          marked with a placeholder: "<!-- Sally: embed journeys here -->".
-          Signals prd_skeleton_complete when structure is written but before Sally's section.
+          marked with a placeholder: "<!-- Arcee: embed journeys here -->".
+          Signals prd_skeleton_complete when structure is written but before Arcee's section.
 
       - name: ux_journeys_inline
-        label: "UX Journeys Inline — Sally"
+        label: "UX Journeys Inline — Arcee"
         agent: ux-designer
         skill: ".claude/skills/ux-journeys.md"
         bmm_workflow: "{project-root}/tools/bmm/workflows/2-plan-workflows/create-ux-design/workflow.md"
@@ -201,9 +201,9 @@ phases:
             - "tools/bmm/output/research/research-findings.md"
             - "docs/user-journeys/"
         description: >
-          John loads Sally's agent file (.claude/agents/ux-designer.md) and embodies her.
+          Optimus Prime loads Arcee's agent file (.claude/agents/ux-designer.md) and embodies her.
           Runs /ux-journeys skill. Appends journey maps to the PRD's Functional Requirements
-          section. Does not overwrite John's content. Signals ux_journeys_complete on finish.
+          section. Does not overwrite Optimus Prime's content. Signals ux_journeys_complete on finish.
 
       - name: prd_validation
         label: "PRD Validation"
@@ -211,7 +211,7 @@ phases:
         exec: "{project-root}/tools/bmm/workflows/2-plan-workflows/create-prd/workflow-validate-prd.md"
         input: "tools/bmm/output/prds/final-prd.md"
         description: >
-          John re-assumes PM role. Runs the 12-step PRD validator automatically.
+          Optimus Prime re-assumes PM role. Runs the 12-step PRD validator automatically.
           Any validation failure must be resolved before the gate runs.
           Validator output is appended as a checklist to the PRD frontmatter.
 
@@ -229,13 +229,13 @@ phases:
       party_mode_workflow: "{project-root}/tools/bmm/core/workflows/party-mode/workflow.md"
       participants: [pm, ux-designer, architect]
       participant_roles:
-        pm:          "John presents the PRD — requirements, metrics, scope"
-        ux-designer: "Sally walks through the embedded user journeys"
-        architect:   "Winston validates that every journey step has a supportable data model"
+        pm:          "Optimus Prime presents the PRD — requirements, metrics, scope"
+        ux-designer: "Arcee walks through the embedded user journeys"
+        architect:   "Wheeljack validates that every journey step has a supportable data model"
       agenda:
-        - "John: PRD walkthrough — requirements and success metrics"
-        - "Sally: journey walkthrough — happy paths, failure states, edge cases"
-        - "Winston: feasibility audit — flag any requirement that needs architectural investigation"
+        - "Optimus Prime: PRD walkthrough — requirements and success metrics"
+        - "Arcee: journey walkthrough — happy paths, failure states, edge cases"
+        - "Wheeljack: feasibility audit — flag any requirement that needs architectural investigation"
         - "All: confirm no ambiguities that would block architecture work"
       output_contract_check: phase_02
       prerequisite_check:
@@ -243,7 +243,7 @@ phases:
         validator_passed: true    # PRD validation must pass before gate launches
       outcomes:
         go:
-          description: "PRD and journeys are complete and unambiguous — Winston can start Phase 03"
+          description: "PRD and journeys are complete and unambiguous — Wheeljack can start Phase 03"
           action: proceed_to_phase_03
           handoff_signal: gate_02_passed
         open_items:
@@ -260,7 +260,7 @@ phases:
   - phase: 03_Architecture_and_Readiness
     label: "Phase 03 — Architecture & Technical Readiness"
     orchestrator: pm
-    execution_model: sequential   # Winston runs alone; John + Sally available for queries
+    execution_model: sequential   # Wheeljack runs alone; Optimus Prime + Arcee available for queries
     prerequisite: gate_02_passed
 
     steps:
@@ -271,11 +271,11 @@ phases:
         action: read_handoff
         file: "tools/bmm/output/handoff-02.md"
         description: >
-          John loads Winston's agent file (.claude/agents/architect.md) and embodies him.
-          Winston reads handoff-02.md completely before touching the PRD.
+          Optimus Prime loads Wheeljack's agent file (.claude/agents/architect.md) and embodies him.
+          Wheeljack reads handoff-02.md completely before touching the PRD.
 
       - name: arch_alignment
-        label: "Architecture Alignment — Winston"
+        label: "Architecture Alignment — Wheeljack"
         agent: architect
         skill: ".claude/skills/create-architecture.md"
         bmm_workflow: "{project-root}/tools/bmm/workflows/3-solutioning/create-architecture/workflow.md"
@@ -284,9 +284,9 @@ phases:
           input: "tools/bmm/output/prds/final-prd.md"
         output: "tools/bmm/output/architecture-decisions.md"
         description: >
-          Winston runs /create-architecture skill. Reads locked final-prd.md as single input.
+          Wheeljack runs /create-architecture skill. Reads locked final-prd.md as single input.
           Produces data model + API contracts + decisions + risks.
-          May query John or Sally inline if a requirement is ambiguous — but does not reopen
+          May query Optimus Prime or Arcee inline if a requirement is ambiguous — but does not reopen
           the PRD without gate approval.
 
       - name: implementation_readiness_check
@@ -298,9 +298,9 @@ phases:
           architecture: "tools/bmm/output/architecture-decisions.md"
         output: "tools/bmm/output/readiness-report.md"
         description: >
-          Winston runs the readiness check as an automated validator — not a party session.
+          Wheeljack runs the readiness check as an automated validator — not a party session.
           Produces readiness-report.md with pass/fail per requirement.
-          Gaps found here are returned to John for targeted PRD amendment (not full Phase 02 re-run).
+          Gaps found here are returned to Optimus Prime for targeted PRD amendment (not full Phase 02 re-run).
 
       - name: write_phase03_handoff
         label: "Write Phase 03 Handoff"
@@ -316,7 +316,7 @@ phases:
       description: >
         Primary check is the automated readiness report. Party mode only if gaps are found.
         If readiness-report.md shows all-pass, gate auto-passes — no party session needed.
-        If gaps exist, party mode with John + Winston to resolve targeted items.
+        If gaps exist, party mode with Optimus Prime + Wheeljack to resolve targeted items.
       auto_pass_condition: "readiness-report.md: all_checks_pass = true"
       party_mode_workflow: "{project-root}/tools/bmm/core/workflows/party-mode/workflow.md"
       participants: [pm, architect]
@@ -336,7 +336,7 @@ phases:
   - phase: 04_One_Shot_Backlog
     label: "Phase 04 — One-Shot Backlog"
     orchestrator: pm
-    execution_model: interleaved  # John then Bob — handshake protocol
+    execution_model: interleaved  # Optimus Prime then Ironhide — handshake protocol
     prerequisite: gate_03_passed
 
     steps:
@@ -347,11 +347,11 @@ phases:
         action: read_handoff
         file: "tools/bmm/output/handoff-03.md"
         description: >
-          John resumes as himself. Reads handoff-03.md — carries forward
-          Winston's risk flags and open items into story authoring.
+          Optimus Prime resumes as himself. Reads handoff-03.md — carries forward
+          Wheeljack's risk flags and open items into story authoring.
 
       - name: story_intent
-        label: "Story Intent — John"
+        label: "Story Intent — Optimus Prime"
         agent: pm
         skill: ".claude/skills/confluence-user-stories.md"
         params:
@@ -361,13 +361,13 @@ phases:
             - "tools/bmm/output/architecture-decisions.md"
         output: "tools/bmm/output/stories/story-intent.md"
         description: >
-          John runs /confluence-user-stories in intent-only mode.
+          Optimus Prime runs /confluence-user-stories in intent-only mode.
           Produces story intent doc: user story statement + acceptance criteria
           + PRD section reference per requirement. Does not push to Jira yet.
           Signals story_intent_complete on finish.
 
       - name: gherkin_stories
-        label: "Gherkin Stories + Jira — Bob"
+        label: "Gherkin Stories + Jira — Ironhide"
         agent: sm
         skill: ".claude/skills/user-stories.md"
         bmm_workflow: "{project-root}/tools/bmm/workflows/4-implementation/create-story/workflow.yaml"
@@ -380,8 +380,8 @@ phases:
             - "tools/bmm/output/prds/final-prd.md"
         output: "tools/bmm/output/stories/"
         description: >
-          John loads Bob's agent file (.claude/agents/sm.md) and embodies him.
-          Bob runs /user-stories skill. Consumes John's story-intent.md —
+          Optimus Prime loads Ironhide's agent file (.claude/agents/sm.md) and embodies him.
+          Ironhide runs /user-stories skill. Consumes Optimus Prime's story-intent.md —
           converts each intent into full Gherkin format, resolves Jira epic,
           checks for duplicates, and pushes stories to Jira.
           Signals stories_complete on finish.
@@ -401,17 +401,17 @@ phases:
           fail_on: any
           report_output: "tools/bmm/output/gherkin-validation-report.md"
         description: >
-          Bob runs the Gherkin validator as a post-process.
+          Ironhide runs the Gherkin validator as a post-process.
           Fails hard on any violation — does not proceed to publish until all pass.
-          On failure: Bob re-runs only the failing stories (not the full phase).
+          On failure: Ironhide re-runs only the failing stories (not the full phase).
           Signals gherkin_validator_passed on all-pass.
 
       - name: publish_approval
-        label: "Publish Approval — John"
+        label: "Publish Approval — Optimus Prime"
         agent: pm
         action: approve_publish
         description: >
-          John resumes and presents the validation report.
+          Optimus Prime resumes and presents the validation report.
           Asks user to approve publish. On approval: push PRD to Confluence,
           confirm Jira stories are created, update handoff signals.
 
@@ -426,7 +426,7 @@ phases:
           action: terminate_success
           handoff_signal: workflow_complete
         validator_failures:
-          description: "Gherkin validator found issues — Bob re-runs failing stories"
+          description: "Gherkin validator found issues — Ironhide re-runs failing stories"
           action: return_to_step_gherkin_stories
           amend_scope: failing_stories_only
 
@@ -451,5 +451,5 @@ publish:
   on_workflow_complete:
     prds_target:      "{project-root}/docs/PRDs"
     research_target:  "{project-root}/docs/research"
-    confluence_push:  true    # John pushes PRD to Confluence on publish approval
-    jira_stories:     true    # Bob has already pushed stories during phase 04
+    confluence_push:  true    # Optimus Prime pushes PRD to Confluence on publish approval
+    jira_stories:     true    # Ironhide has already pushed stories during phase 04

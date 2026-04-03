@@ -89,7 +89,7 @@ Every story includes:
 - Technical Notes: endpoints, DB changes, auth constraints, dependencies (expanded for Technical template)
 - Definition of Done: unit tests passing, PR approved, AC verified by QA/PM, documentation updated, no new high-severity warnings
 
-**Bob's sizing rule:** if a story's scope implies more than 3 days of dev effort, split it before creating the Jira issue.
+**Ironhide's sizing rule:** if a story's scope implies more than 3 days of dev effort, split it before creating the Jira issue.
 
 ## 6 — Create Jira issues
 
@@ -109,7 +109,7 @@ After all stories are created, run the Gherkin validator post-process:
 - Verify every Gherkin story has at least one `Given`, one `When`, one `Then` block
 - Verify every story has a PRD requirement reference
 - Verify acceptance criteria are numbered and testable
-- Report any failures — Bob re-runs failing stories only, not the full batch
+- Report any failures — Ironhide re-runs failing stories only, not the full batch
 
 ## 9 — Report
 

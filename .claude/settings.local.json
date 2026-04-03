@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(sed -i -e 's/flag to John before/flag to Optimus Prime before/g' -e 's/surface it to John before/surface it to Optimus Prime before/g' -e 's/that John hasn'\\\\''t made/that Optimus Prime hasn'\\\\''t made/g' -e 's/decisions that John hasn'\\\\''t made/decisions that Optimus Prime hasn'\\\\''t made/g' -e 's/defers to John on/defers to Optimus Prime on/g' c:/Users/Admin/product-repo/.claude/agents/analyst.md c:/Users/Admin/product-repo/.claude/agents/architect.md c:/Users/Admin/product-repo/.claude/agents/sm.md c:/Users/Admin/product-repo/.claude/agents/ux-designer.md c:/Users/Admin/product-repo/.claude/agents/pm.md)",
+      "Bash(sed -i -e 's/flag it to Sally/flag it to Arcee/g' -e 's/note it as a Winston dependency/note it as a Wheeljack dependency/g' -e 's/get Winston'\\\\''s input/get Wheeljack'\\\\''s input/g' -e 's/defers to John on product decisions and to Winston on/defers to Optimus Prime on product decisions and to Wheeljack on/g' -e 's/checking with John that/checking with Optimus Prime that/g' c:/Users/Admin/product-repo/.claude/agents/analyst.md c:/Users/Admin/product-repo/.claude/agents/architect.md c:/Users/Admin/product-repo/.claude/agents/sm.md c:/Users/Admin/product-repo/.claude/agents/ux-designer.md c:/Users/Admin/product-repo/.claude/agents/pm.md)",
+      "Bash(sed -i -e 's/e\\\\.g\\\\. Winston asking/e.g. Wheeljack asking/g' -e 's|Optimus Prime: \\\\.\\\\.\\\\. / Winston: \\\\.\\\\.\\\\.|Optimus Prime: ... / Wheeljack: ...|g' c:/Users/Admin/product-repo/.claude/agents/pm.md)"
+    ]
+  }
+}

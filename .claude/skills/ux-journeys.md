@@ -42,18 +42,18 @@ Feature: [initiative name — used to scope journey discovery]
 Personas: [optional — comma-separated persona names to focus on]
 ```
 
-Or in orchestrated mode — John passes context directly, no manual invocation needed.
+Or in orchestrated mode — Optimus Prime passes context directly, no manual invocation needed.
 
 ## Standalone mode — no PRD exists yet
 
-If `final-prd.md` does not exist at the specified path, Sally writes a standalone journey document:
+If `final-prd.md` does not exist at the specified path, Arcee writes a standalone journey document:
 
 ```
 tools/bmm/output/prds/ux-journeys-draft.md
 ```
 
-At completion, Sally prompts:
-> "Journeys saved to `ux-journeys-draft.md`. Run `/create-prd` next — John can incorporate these directly into the PRD's Functional Requirements section."
+At completion, Arcee prompts:
+> "Journeys saved to `ux-journeys-draft.md`. Run `/create-prd` next — Optimus Prime can incorporate these directly into the PRD's Functional Requirements section."
 
 This draft is not counted as the `ux_journeys_complete` handoff signal — only inline PRD embedding sets that flag.
 
@@ -109,14 +109,14 @@ Map at minimum:
 
 Open `tools/bmm/output/prds/final-prd.md`. Locate the `## Functional Requirements` section (create it if missing). Append a `### User Journeys` subsection with all mapped journeys.
 
-**Do not overwrite any content John has already written.** Append only to the designated subsection. If the section already has content, review it first and extend rather than replace.
+**Do not overwrite any content Optimus Prime has already written.** Append only to the designated subsection. If the section already has content, review it first and extend rather than replace.
 
 Format:
 
 ```markdown
 ### User Journeys
 
-> Authored by Sally (UX Designer) — embedded inline per BMM Phase 02 protocol.
+> Authored by Arcee (UX Designer) — embedded inline per BMM Phase 02 protocol.
 > Reference: docs/user-journeys/[FunnelStage]/ for canonical journey patterns.
 
 [Journey maps go here]
@@ -124,7 +124,7 @@ Format:
 
 ## 4 — Design principles applied
 
-For every journey, validate against Sally's core principles:
+For every journey, validate against Arcee's core principles:
 
 | Principle | Check |
 |---|---|
@@ -147,7 +147,7 @@ Do not proceed to gate until user confirms.
 
 User journeys embedded directly into `tools/bmm/output/prds/final-prd.md` under `## Functional Requirements → ### User Journeys`. No separate file is produced.
 
-**In orchestrated mode:** Sally works interleaved with John — John authors requirements top-down, Sally appends journeys bottom-up into the same section. Both signal complete before the Technical Readiness gate runs.
+**In orchestrated mode:** Arcee works interleaved with Optimus Prime — Optimus Prime authors requirements top-down, Arcee appends journeys bottom-up into the same section. Both signal complete before the Technical Readiness gate runs.
 
 ## Failure Modes
 
