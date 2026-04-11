@@ -2,7 +2,7 @@
 
 BMM is a PM-scoped workflow engine built on the [BMAD Method v6](https://github.com/bmad-method). It provides structured, agent-driven workflows that take a product idea from initial concept through to dev-ready Gherkin user stories.
 
-**The engine is installed globally at `~/.claude/bmm/`.** This directory (`tools/bmm/`) holds only the per-repo configuration and generated output.
+The engine source lives in this repo (`tools/bmm/core/`, `tools/bmm/workflows/`, etc.) and is installed globally to `~/.claude/bmm/` by the setup wizard (Step 7). After installation, agents and skills load from `~/.claude/` in every repo you open with Claude Code.
 
 ---
 
@@ -184,26 +184,35 @@ tools/bmm/output/               ← gitignored — commit selectively to docs/PR
 
 ---
 
-## Directory Structure (this repo)
+## Directory Structure
 
 ```
 tools/bmm/
-├── config.yaml     ← Per-repo configuration (committed) — only file that lives here
+├── config.yaml     ← Per-repo configuration (committed) — edit for your project
 ├── README.md       ← This file
-└── output/         ← Generated artefacts (gitignored)
+├── core/           ← Workflow engine source (installed to ~/.claude/bmm/core/ by setup)
+├── workflows/      ← Phase workflow source (installed to ~/.claude/bmm/workflows/ by setup)
+├── data/           ← Templates source (installed to ~/.claude/bmm/data/ by setup)
+├── tasks/          ← Shared tasks source (installed to ~/.claude/bmm/tasks/ by setup)
+├── teams/          ← Team configs source (installed to ~/.claude/bmm/teams/ by setup)
+└── output/         ← Generated artefacts (gitignored — not installed)
 ```
 
-The workflow engine, workflows, core, tasks, teams, and data directories all live globally at `~/.claude/bmm/` and are shared across all repos.
+The setup wizard (Step 7) copies `core/`, `workflows/`, `data/`, `tasks/`, and `teams/` into `~/.claude/bmm/`. After that, the global engine is shared across all repos — only `config.yaml` and `output/` remain per-repo.
 
 ---
 
 ## Using BMM in a New Repo
 
-1. Create `tools/bmm/config.yaml` with your project-specific settings (copy from this file as a template)
-2. Add `tools/bmm/output/` to `.gitignore`
-3. Invoke any agent or skill — the global engine at `~/.claude/bmm/` handles the rest
+1. Clone this repo and run `./setup.sh` — Step 7 installs everything globally
+2. In your target repo, create `tools/bmm/config.yaml` (copy from this file as a template, update project-specific fields)
+3. Add `tools/bmm/output/` to `.gitignore`
+4. Invoke any agent or skill — the global engine at `~/.claude/bmm/` handles the rest
 
-See `~/.claude/CLAUDE.md` for the full global setup reference.
+To update the global engine after pulling changes to this repo:
+```bash
+python -m tools.setup reconfigure   # → "Install global Claude tools"
+```
 
 ---
 

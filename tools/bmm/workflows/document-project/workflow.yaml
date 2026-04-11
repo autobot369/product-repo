@@ -1,0 +1,58 @@
+name: document-project
+description: 'Analyze an existing project to produce useful documentation for both human and LLM context. Use when the user says "document this project" or "generate project documentation"'
+
+config_source: "{project-root}/tools/bmm/config.yaml"
+user_name: "{config_source}:user_name"
+communication_language: "{config_source}:communication_language"
+document_output_language: "{config_source}:document_output_language"
+date: system-generated
+output_folder: "{config_source}:output_folder"
+project_knowledge: "{config_source}:project_knowledge"
+
+installed_path: "~/.claude/bmm/workflows/document-project"
+
+# Input: index-guided scan of all existing project documentation
+input_file_patterns:
+  prds:
+    description: "Existing PRDs and product requirements"
+    whole: "{project_knowledge}/PRDs/**/*.md"
+    load_strategy: "INDEX_GUIDED"
+  research:
+    description: "Existing research and analysis documents"
+    whole: "{project_knowledge}/research/**/*.md"
+    load_strategy: "INDEX_GUIDED"
+  user_journeys:
+    description: "User journey and funnel stage documentation"
+    whole: "{project_knowledge}/user-journeys/**/*.md"
+    load_strategy: "INDEX_GUIDED"
+  specs:
+    description: "Technical and functional specifications"
+    whole: "{project_knowledge}/specs/**/*.md"
+    load_strategy: "INDEX_GUIDED"
+
+# Output: project context file for AI and human consumption
+default_output_file: "{output_folder}/research/project-context-{date}.md"
+
+# Workflow steps for the engine to execute
+steps:
+  - id: scan
+    description: "Scan project_knowledge paths and build document inventory"
+    action: "index_files"
+    input: "input_file_patterns"
+
+  - id: analyse
+    description: "Synthesise findings into structured project context document covering: product goals, existing features, user segments, key metrics, open decisions, and known constraints"
+    action: "generate"
+    output_sections:
+      - "## Product Overview"
+      - "## User Segments"
+      - "## Existing Features (shipped)"
+      - "## In-Flight Initiatives"
+      - "## Key Metrics & North Stars"
+      - "## Open Decisions & Constraints"
+      - "## AI Context Notes"
+
+  - id: write
+    description: "Write output to default_output_file"
+    action: "write_file"
+    target: "{default_output_file}"

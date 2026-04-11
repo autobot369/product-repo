@@ -1,0 +1,8 @@
+name,title,persona,capabilities
+pm,Product Manager,John,"PRD creation, requirements discovery, stakeholder alignment"
+analyst,Business Analyst,Mary,"market research, competitive analysis, requirements elicitation"
+architect,Architect,Winston,"distributed systems, cloud infrastructure, API design"
+ux-designer,UX Designer,Sally,"user research, interaction design, UI patterns"
+sm,Scrum Master,Bob,"sprint planning, story preparation, agile ceremonies"
+dev,Developer,Amelia,"story execution, TDD, code implementation"
+qa,QA Engineer,Quinn,"test automation, API testing, E2E testing"

@@ -48,8 +48,8 @@ CLAUDE_MODELS = [
 SKILL_LEVELS = ["beginner", "intermediate", "expert"]
 
 _GLOBAL_CLAUDE = pathlib.Path.home() / ".claude"
-AGENT_FILES = sorted((_GLOBAL_CLAUDE / "agents").glob("*.md"))
-SKILL_FILES = sorted((_GLOBAL_CLAUDE / "skills").glob("*.md"))
+AGENT_FILES = sorted((REPO_ROOT / ".claude" / "agents").glob("*.md"))
+SKILL_FILES = sorted((REPO_ROOT / ".claude" / "skills").glob("*.md"))
 
 
 # ── helpers ─────────────────────────────────────────────────────────────────────
@@ -317,11 +317,11 @@ def step_templates() -> None:
         reviewable.append(("skill", path))
 
     if AGENT_FILES:
-        console.print("  [bold]Agent personas[/bold] (~/.claude/agents/):")
+        console.print("  [bold]Agent personas[/bold] (.claude/agents/):")
         for path in AGENT_FILES:
             console.print(f"    [cyan]{path.name}[/cyan]")
     if SKILL_FILES:
-        console.print("  [bold]Skill playbooks[/bold] (~/.claude/skills/):")
+        console.print("  [bold]Skill playbooks[/bold] (.claude/skills/):")
         for path in SKILL_FILES:
             console.print(f"    [cyan]{path.name}[/cyan]")
 
@@ -342,8 +342,8 @@ def step_templates() -> None:
     if "Skip" in scope:
         console.print()
         _info("You can review them later:")
-        _info("  ~/.claude/agents/   — agent persona files")
-        _info("  ~/.claude/skills/   — skill playbook files")
+        _info("  .claude/agents/   — agent persona files")
+        _info("  .claude/skills/   — skill playbook files")
         return
 
     files_to_open: list[pathlib.Path] = []
@@ -395,12 +395,110 @@ def _open_in_editor(editor: str, path: pathlib.Path) -> None:
         _fail(f"Could not launch '{editor}'. Open manually: {path}")
 
 
-# ── Step 7: Confluence migration (optional) ──────────────────────────────────────
+# ── Step 7: Global Claude install ───────────────────────────────────────────────
+
+_BMM_ENGINE_DIRS = ["core", "workflows", "data", "tasks", "teams"]
+
+
+def step_install_global() -> None:
+    """Copy agents, skills, and BMM engine from repo into ~/.claude/ globally."""
+    import shutil
+
+    _section("Step 7 — Install Global Claude Tools")
+    console.print(
+        "  Agents, skills, and the BMM workflow engine can be installed globally\n"
+        "  so they load in [bold]every repo[/bold] you work from — not just this one.\n"
+        "\n"
+        "  Installs to:\n"
+        "    [cyan]~/.claude/agents/[/cyan]   ← agent personas\n"
+        "    [cyan]~/.claude/skills/[/cyan]   ← skill playbooks\n"
+        "    [cyan]~/.claude/bmm/[/cyan]      ← workflow engine (165 files)\n"
+        "    [cyan]~/.claude/CLAUDE.md[/cyan] ← global system prompt\n"
+    )
+
+    install_it = _prompt(
+        questionary.confirm,
+        message="Install Claude tools globally now?",
+        default=True,
+    )
+    if not install_it:
+        _info("Skipping. You can install later by running:")
+        _info("  python -m tools.setup reconfigure  → Global Claude install")
+        return
+
+    global_claude = pathlib.Path.home() / ".claude"
+    global_claude.mkdir(exist_ok=True)
+
+    errors: list[str] = []
+
+    # Agents
+    src_agents = REPO_ROOT / ".claude" / "agents"
+    dst_agents = global_claude / "agents"
+    dst_agents.mkdir(exist_ok=True)
+    for f in src_agents.glob("*.md"):
+        try:
+            shutil.copy2(f, dst_agents / f.name)
+        except Exception as e:
+            errors.append(f"agents/{f.name}: {e}")
+    _ok(f"Agents → {dst_agents}")
+
+    # Skills
+    src_skills = REPO_ROOT / ".claude" / "skills"
+    dst_skills = global_claude / "skills"
+    dst_skills.mkdir(exist_ok=True)
+    for f in src_skills.glob("*.md"):
+        try:
+            shutil.copy2(f, dst_skills / f.name)
+        except Exception as e:
+            errors.append(f"skills/{f.name}: {e}")
+    _ok(f"Skills → {dst_skills}")
+
+    # BMM engine directories
+    src_bmm = REPO_ROOT / "tools" / "bmm"
+    dst_bmm = global_claude / "bmm"
+    dst_bmm.mkdir(exist_ok=True)
+    for dir_name in _BMM_ENGINE_DIRS:
+        src_dir = src_bmm / dir_name
+        dst_dir = dst_bmm / dir_name
+        if src_dir.exists():
+            if dst_dir.exists():
+                shutil.rmtree(dst_dir)
+            try:
+                shutil.copytree(src_dir, dst_dir)
+            except Exception as e:
+                errors.append(f"bmm/{dir_name}: {e}")
+    _ok(f"BMM engine → {dst_bmm}")
+
+    # Global CLAUDE.md
+    src_global_md = REPO_ROOT / ".claude" / "global-CLAUDE.md"
+    dst_global_md = global_claude / "CLAUDE.md"
+    if src_global_md.exists():
+        try:
+            shutil.copy2(src_global_md, dst_global_md)
+            _ok(f"CLAUDE.md → {dst_global_md}")
+        except Exception as e:
+            errors.append(f"CLAUDE.md: {e}")
+    elif not dst_global_md.exists():
+        _info("~/.claude/CLAUDE.md not written — source not found. Create it manually if needed.")
+
+    if errors:
+        console.print()
+        _fail("Some files could not be copied:")
+        for err in errors:
+            _info(f"  {err}")
+        _info("Fix permissions and re-run via: python -m tools.setup reconfigure")
+    else:
+        console.print()
+        console.print("  [green bold]Global install complete.[/green bold]")
+        console.print("  [dim]Agents and skills now load automatically in every repo you open with Claude Code.[/dim]")
+
+
+# ── Step 8: Confluence migration (optional) ──────────────────────────────────────
 
 def step_migration(atlassian: dict[str, str]) -> None:
     from tools.setup.migration_runner import run_migration
 
-    _section("Step 7 — Confluence Migration  (optional)")
+    _section("Step 8 — Confluence Migration  (optional)")
     console.print(
         "  Import your existing Confluence docs into this repo's knowledge base.\n"
         "  The migration pipeline runs in stages with review gates between each step.\n"
@@ -508,6 +606,7 @@ def run_wizard() -> None:
     _write_all(identity, atlassian, jira, confluence, bmm)
 
     step_templates()
+    step_install_global()
     step_migration(atlassian)
 
     _section("ACTIVATION COMPLETE")
@@ -531,6 +630,7 @@ _RECONFIG_SECTIONS = [
     ("Confluence (space key, page IDs)", "confluence"),
     ("Claude / BMM settings", "bmm"),
     ("Agent persona templates", "templates"),
+    ("Install global Claude tools (~/.claude/)", "install_global"),
     ("Run Confluence migration", "migration"),
     ("Exit", "exit"),
 ]
@@ -622,6 +722,8 @@ def run_reconfigure() -> None:
             _ok("BMM config updated")
         elif key == "templates":
             step_templates()
+        elif key == "install_global":
+            step_install_global()
         elif key == "migration":
             step_migration(atlassian)
 
