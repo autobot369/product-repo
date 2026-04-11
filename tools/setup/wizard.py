@@ -7,7 +7,7 @@ Steps:
   3  Jira              (project keys, default key)   → live validation
   4  Confluence        (space key, optional page IDs) → live validation
   5  Claude / BMM      (model, language, skill level)
-  6  Template review   (open .claude/agents/*.md one by one)
+  6  Template review   (open ~/.claude/agents/*.md and ~/.claude/skills/*.md)
   7  Migration         (optional confluence-migration run)
 
 run_reconfigure() presents a menu for partial re-runs of any step.
@@ -47,8 +47,9 @@ CLAUDE_MODELS = [
 
 SKILL_LEVELS = ["beginner", "intermediate", "expert"]
 
-AGENT_FILES = sorted((REPO_ROOT / ".claude" / "agents").glob("*.md"))
-SKILL_FILES = sorted((REPO_ROOT / ".claude" / "skills").glob("*.md"))
+_GLOBAL_CLAUDE = pathlib.Path.home() / ".claude"
+AGENT_FILES = sorted((_GLOBAL_CLAUDE / "agents").glob("*.md"))
+SKILL_FILES = sorted((_GLOBAL_CLAUDE / "skills").glob("*.md"))
 
 
 # ── helpers ─────────────────────────────────────────────────────────────────────
@@ -316,11 +317,11 @@ def step_templates() -> None:
         reviewable.append(("skill", path))
 
     if AGENT_FILES:
-        console.print("  [bold]Agent personas[/bold] (.claude/agents/):")
+        console.print("  [bold]Agent personas[/bold] (~/.claude/agents/):")
         for path in AGENT_FILES:
             console.print(f"    [cyan]{path.name}[/cyan]")
     if SKILL_FILES:
-        console.print("  [bold]Skill playbooks[/bold] (.claude/skills/):")
+        console.print("  [bold]Skill playbooks[/bold] (~/.claude/skills/):")
         for path in SKILL_FILES:
             console.print(f"    [cyan]{path.name}[/cyan]")
 
@@ -341,8 +342,8 @@ def step_templates() -> None:
     if "Skip" in scope:
         console.print()
         _info("You can review them later:")
-        _info("  .claude/agents/   — agent persona files")
-        _info("  .claude/skills/   — skill playbook files")
+        _info("  ~/.claude/agents/   — agent persona files")
+        _info("  ~/.claude/skills/   — skill playbook files")
         return
 
     files_to_open: list[pathlib.Path] = []

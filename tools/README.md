@@ -14,7 +14,7 @@ Credentials are never stored in config — load them from `.env` at repo root (`
 | [confluence-migration/](confluence-migration/README.md) | Migrates Confluence spaces into `docs/` as clean Markdown |
 | [jira-monitor/](jira-monitor/) | Automated sprint, release, demand, and feature pipeline reporting |
 | [pm-workers/](pm-workers/README.md) | Claude-powered PM agents for PRD creation, story generation, and market research |
-| [agent-persona-skill-builder/](agent-persona-skill-builder/README.md) | Interactive CLI to generate token-optimized `.claude/agents/`, `.claude/personas/`, and `.claude/skills/` files |
+| [agent-persona-skill-builder/](agent-persona-skill-builder/README.md) | Interactive CLI to generate token-optimized agent, persona, and skill files for `~/.claude/agents/` and `~/.claude/skills/` |
 
 ---
 

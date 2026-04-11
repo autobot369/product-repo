@@ -23,7 +23,7 @@ A structured workspace for product teams — documentation, user journeys, PRDs,
 │   ├── jira-monitor/      # Sprint, release, demand, and pipeline reporting
 │   └── pm-workers/        # Claude-powered agents for PRD creation and research
 │
-├── .claude/               # AI agent personas and skill playbooks
+├── .claude/               # Project-scoped Claude context (claude.md only)
 ├── tests/                 # Tests for tooling and automation
 ├── setup.sh               # One-command workspace bootstrapper
 ├── requirements.txt       # Consolidated Python dependencies
@@ -63,7 +63,7 @@ The wizard walks you through 7 guided steps:
 | 3 — Jira | Registers your project keys and validates each one against the API |
 | 4 — Confluence | Maps your space key and optional parent page IDs for PRDs, research, and reports |
 | 5 — Claude / BMM | Selects your primary Claude model, language, and skill level |
-| 6 — Agent Templates | Opens each `.claude/agents/` persona file for you to personalise |
+| 6 — Agent Templates | Opens each `~/.claude/agents/` persona and `~/.claude/skills/` file for you to personalise |
 | 7 — Migration *(optional)* | Imports your existing Confluence space into `docs/` as versioned Markdown |
 
 After setup:
@@ -80,7 +80,7 @@ If you prefer to configure by hand, all non-secret settings live in `tools/confi
 
 ### AI agents and skills
 
-Agent personas live in `.claude/agents/` and slash-command skills in `.claude/skills/`. Use with Claude Code directly, or run the full PM workflow via the BMM engine.
+Agent personas and slash-command skills are installed **globally** at `~/.claude/agents/` and `~/.claude/skills/` — they load automatically in this repo and any other repo you work from. The BMM workflow engine lives at `~/.claude/bmm/`. See `~/.claude/CLAUDE.md` for the full system reference and new-repo setup instructions.
 
 ---
 
